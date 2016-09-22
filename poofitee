@@ -1,4 +1,5 @@
 #! /bin/bash
+version="version 0.0.1"
 #
 # Downloading this script: YOU SHOULDN'T COPY/PASTE BECAUSE THERE ARE ADJACENT SPACES THAT WOULD GET CONSOLIDATED THAT WAY.  Instead, download with raw or download the file
 #
@@ -2644,79 +2645,6 @@ else
      awkpath="$($whereispath $binaryflag awk)"
      awkpath="${awkpath#*:}";awkpath="${awkpath# }";awkpath="${awkpath%% *}"
 fi
-external_net_interface="$($ippath -o route get 8.8.8.8 2>/dev/null|$awkpath '{for (i=1;i<=NF;i++) {if ($i=="dev"){ print $(i+1);exit }}}')"
-if [ -z "$external_net_interface" ];then
-     clear
-     printf "\nUnable to identify an Internet connection."
-     until (printf "$($ippath link show|$greppath -E "^[1-9][0-9]*:"|$greppath -v lo:\
-         |$sedpath 's/://g'\
-         |$awkpath '{print $2}')\n"|$greppath "$external_net_interface" > /dev/null) && ! [ -z "$external_net_interface" ];do
-          printf "  Type in the name of the Internet-\
-\nfacing interface from the following choices:\n"
-     printf "$($ippath link show|$greppath -E "^[1-9][0-9]*:"|$greppath -v lo:\
-         |$sedpath 's/://g'\
-         |$awkpath '{print $2}')\n"
-         read -er external_net_interface
-         printf "\n$internal_net_interfaces\nand\n$external_net_interface\n"
-     done
-fi
-$whiptailpath --title "WELCOME TO THE POOFITEE INSTALLER!" \
---backtitle "POOFITEE  version 0.0.1$(printf '%.s'" " $(seq 41))Copyright Screen" \
---checklist \
-"            POOFITEE IS CURRENTLY AVAILABLE IN TESTING STATUS\
-\n\
-\nSpecific limitations of this version -\
-\n\
-\n- No integrated dependency support is provided\
-\n\
-\n- No uninstall feature is provided\
-\n\
-\n- If loadable modules for iptables are not automatically loaded in your\
-\n    Linux kernel as it is configured, some options of poofitee will end\
-\n    execution of this script early and inform you to manually load the\
-\n    ipset module, a one-time necessary event. Currently, poofitee is not\
-\n    advanced enough to load kernel modules itself.\
-\n\
-\nYour suggestions for improvements are solicited and welcome.  Use the\
-\nPOOFITEE Wiki to offer them...\
-\n\n         Copyright 2016 - Kenneth L. Anderson MCSE, RDH, BGS, BT\
-\n\nThis work of authorship is made available to you under only one out of\
-\nthe following two arrangements.  In both arrangements, this copyright\
-\nmessage must remain with this work of authorship and any and all of its\
-\nderivatives, except that these requirements will be void if found to be\
-\nin explicit and irreconcileable conflict with any copyright of a package\
-\nintegrated herein.\
-\n\n1.  Arrangement for your freedom from monetary obligation to the author:\
-\n - This copyright message must continue to be displayed at launch time\
-\n - This copyright message includes the statement\
-\n\n\"       Jesus Christ is Lord of all  ... click OK to acknowledge\"\
-\n\ndisplayed on its own line with blank lines adjacently both above and\
-\nbelow said statement and rendered statically without attempt made to\
-\nrender said statement transiently.\
-\n\n2.  Arrangement for your freedom from copyright display obligation, or\
-\nto contribute, see the comments within the source code of this script\
-\n\n       Jesus Christ is Lord of all  ... click OK to acknowledge\
-\n
-\n                SELECT DESIRED OPTIONS FOR THIS INSTALLATION\
-\n\n      (f) firewalling\
-\n\n      (e) email remote control\
-\n\n      (\
-$(if [[ $($pspath aux|$greppath -vw grep|$greppath -we pump -we dhclient -we udhcpc -we dhcpcd -we dhclient3|$greppath -w $external_net_interface|$wcpath -l) -eq 0 ]];then \
-     printf "d) dynamic IP address change notifier NOT for your configuration";notdhcp="notdhcp"; \
-else \
-     printf "d) dynamic IP address change notifier"; \
-fi)\n\n      (p) port knocking\
-\n\n      (l) lists (white, black, & static_trusted) to/from storage FUTURE\
-\n\n      (c) copy current configuration to a storage medium FUTURE\
-\n\n      (r) restore the previously saved configuration FUTURE\
-\n\n      (?) context helpful information\
-\n\
-\nTyping the letters f, e, d, p, s, r optionally followed by a question\
-\nmark, or just plain ? with no letters, select all of the many services\
-\nlisted above that you want, then press ENTER: (or Ctrl-c at any time\
-\nto terminate installer)\n \
-" \
---scrolltext 22 76 10
 whichpath="$($whereispath $binaryflag which)";whichpath="${whichpath#*:}";whichpath="${whichpath# }";whichpath="${whichpath%% *}"
 headpath="$($whereispath $binaryflag head)";headpath="${headpath#*:}";headpath="${headpath# }";headpath="${headpath%% *}"
 digpath="$($whereispath $binaryflag dig)";digpath="${digpath#*:}";digpath="${digpath# }";digpath="${digpath%% *}"
@@ -2786,65 +2714,122 @@ likeliest_internal_net_interface="$(printf "$internal_net_interfaces"|$headpath 
 # echo "Script-required items: whereis path=$whereispath, awk path=$awkpath, python path=$pythonpath, grep path=$greppath, ifconfig path=$ifconfigpath, uniq path=$uniqpath, sort path=$sortpath, head path=$headpath";exit
 #
 # Introduction and what we'll do
-startscreen="\nPOOFITEE\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`Main Configuration Screen\
-\n                SELECT DESIRED OPTIONS FOR THIS INSTALLATION\
-\n\n      (f) firewalling\
-\n\n      (e) email remote control\
-\n\n      ("
-if [[ $($pspath aux|$greppath -vw grep|$greppath -we pump -we dhclient -we udhcpc -we dhcpcd -we dhclient3|$greppath -w $external_net_interface|$wcpath -l) -eq 0 ]];then
-     startscreen+="d) dynamic IP address change notifier NOT for your configuration";notdhcp="notdhcp"
-else
-     startscreen+="d) dynamic IP address change notifier"
-fi
-startscreen+="\n\n      (p) port knocking\
-\n\n      (l) lists (white, black, & static_trusted) to/from storage FUTURE\
-\n\n      (c) copy current configuration to a storage medium FUTURE\
-\n\n      (r) restore the previously saved configuration FUTURE\
-\n\n      (?) context helpful information\
-\n
-\nTyping the letters f, e, d, p, s, r optionally followed by a question mark, or\
-\njust plain ? with no letters, select all of the many services listed above that\
-\nyou want, then press ENTER: (or Ctrl-c at any time to terminate installer)\n"
 # POOFITEE: "Packet filtering Owner Only access linux Firewall - the system is Invisible To Everyone Else"
-ghscreen1="POOFITEE\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`Information Screen\
-\n                              Helper Script Overview\
-\nThis set of Linux scripts can install several Internet security features useful\
-\nin homeowner and enterprise systems alike. Enterprise systems however, typically\
-\nare stranger-visible, but POOFITEE ruleset produces stranger-INvisibility.  Gone\
-\nare the complex, buggy \"badguy detection\" algorithms of other firewalls.  More\
-\nunique still to POOFITEE is that the only continuously-running process it has is\
-\na \"tail -f\" bash script line monitoring kernel log events for the purpose of\
-\nlaunching a script.  So POOFITEE is a firewall-plus paradigm, not a running\
-\nprogram.  For a similar reason, it is not an iptables front-end and does not\
-\ninterfere with manual iptables manipluation, allowing you to fine-tune the rule-\
-\nset yourself.  Only trusted addresses can initiate a dialog under the POOFITEE\
-\nruleset.  Of course, those source addresses can be spoofed, but when spoofed, a\
-\ntwo-way connection capable of stealing information is not really possible: the\
-\nlegitimate computer owning the spoofed trusted address will receive return\
-\ncommunications and, without a reason to be in collusion with the spoofer, not\
-\nrelay the information on to them.  Where public services are hosted, POOFITEE is\
-\ncapable of adding pseudo application-layer/stateful protection to mere packet\
-\nfiltering by virtue of a combination of delayed blacklisting and log file\
-\nmonitoring: well-behaving, never-previously-blacklisted sources not inside\
-\nblacklisted network ranges can be whitelisted (non-persistent by default) if\
-\nthey generate log file activity you've specified within some number of minutes.\
-\n\"POOFITEE\" is derived from the descriptive phrase \"Packet filtering Owner Only\
-\naccess Firewall - Invisible To Everyone Else\"."
-ghscreen2="POOFITEE\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`Information Screen\
-\n\nThe advantages of using scripting over a compiled program are significant:\
-\n - most importantly - robust operation in indefinitely continuous duty\
-\n - less script complexity means less risk of programming bugs and mysterious,\
-\n      hard-to-troubleshoot resource limitations\
-\n - source code is simple and extremely easy for you to customize to your liking\
-\n - iptables rule changes are implemented instantly without any process restarts\
-\n      nor conflicts with iptables rules manipulated manually\
-\n - system operators can customize the behavior of all aspects of POOFITEE\
-\n      support scripts without learning to compile, and those customizations are\
-\n      implemented instantly.\
-\n\nThe disadvantages of scripting to compiled languages are normally considered\
-\nto be execution speed of the finished program and fine control of low-level\
-\nsystem functionalities.  POOFITEE is not practically affected by either, thanks\
-\nto the power that Linux scripting offers.\n"
+external_net_interface="$($ippath -o route get 8.8.8.8 2>/dev/null|$awkpath '{for (i=1;i<=NF;i++) {if ($i=="dev"){ print $(i+1);exit }}}')"
+if [ -z "$external_net_interface" ];then
+     clear
+     printf "\nUnable to identify an Internet connection."
+     until (printf "$($ippath link show|$greppath -E "^[1-9][0-9]*:"|$greppath -v lo:\
+         |$sedpath 's/://g'\
+         |$awkpath '{print $2}')\n"|$greppath "$external_net_interface" > /dev/null) && ! [ -z "$external_net_interface" ];do
+          printf "  Type in the name of the Internet-\
+\nfacing interface from the following choices:\n"
+     printf "$($ippath link show|$greppath -E "^[1-9][0-9]*:"|$greppath -v lo:\
+         |$sedpath 's/://g'\
+         |$awkpath '{print $2}')\n"
+         read -er external_net_interface
+         printf "\n$internal_net_interfaces\nand\n$external_net_interface\n"
+     done
+fi
+$whiptailpath --title "WELCOME TO THE POOFITEE INSTALLER!" \
+--backtitle "POOFITEE  $version$(printf '%.s'" " $(seq 41))Copyright Notice" \
+--yesno \
+"            POOFITEE IS CURRENTLY AVAILABLE IN TESTING STATUS\
+\n\
+\nSpecific limitations of this version -\
+\n\
+\n- No integrated dependency support is provided\
+\n\
+\n- No uninstall feature is provided\
+\n\
+\n- If loadable modules for iptables are not automatically loaded in your\
+\n    Linux kernel as it is configured, some options of poofitee will end\
+\n    execution of this script early and inform you to manually load the\
+\n    ipset module, a one-time necessary event. Currently, poofitee is not\
+\n    advanced enough to load kernel modules itself.\
+\n\
+\nYour suggestions for improvements are solicited and welcome.  Use the\
+\nPOOFITEE Wiki to offer them...\
+\n\n         Copyright 2016 - Kenneth L. Anderson MCSE, RDH, BGS, BT\
+\n\nThis work of authorship is made available to you under only one out of\
+\nthe following two arrangements.  In both arrangements, this copyright\
+\nmessage must remain with this work of authorship and any and all of its\
+\nderivatives, except that these requirements will be void if found to be\
+\nin explicit and irreconcileable conflict with any copyright of a package\
+\nintegrated herein.\
+\n\n1.  Arrangement for your freedom from monetary obligation to the author:\
+\n - This copyright message must continue to be displayed at launch time\
+\n - This copyright message includes the statement\
+\n\n\"Jesus Christ is Lord of all  ... tab to and select OK to acknowledge\" \
+\n\ndisplayed on its own line with blank lines adjacently both above and\
+\nbelow said statement and rendered statically without attempt made to\
+\nrender said statement transiently.\
+\n\n2.  Arrangement for your freedom from copyright display obligation, or\
+\nto contribute, see the comments within the source code of this script\
+\n\nJesus Christ is Lord of all  ... tab to and select OK to acknowledge" \
+--yes-button "Scrolled, now proceed" \
+--no-button "Quit now" \
+--scrolltext 22 76
+[ "$?" != "0" ] && exit
+maintitle="SELECT DESIRED OPTIONS FOR THIS INSTALLATION"
+mainbacktitle="POOFITEE  $version$(printf '%.s'" " $(seq 48))Main Menu"
+mainchecklisttest="\nTab to and select with spacebar all or any services listed below that\
+\nyou want, then tab to and select OK or Cancel\n"
+maincheckitems=("firewalling" \
+"email remote control" \
+"dynamic IP address change notifier" \
+"port knocking" \
+"lists (white, black, & static_trusted) to/from storage" \
+"copy current configuration to a storage medium" \
+"restore the previously saved configuration" \
+"include context helpful information" \
+"f" \
+"e" \
+"d" \
+"p" \
+"c" \
+"l" \
+"r" \
+"?")
+answer=""
+ghbacktitle="POOFITEE  $version$(printf '%.s'" " $(seq 48))Main Menu"
+ghscreen1="This set of Linux scripts can install several Internet security features useful \
+in homeowner and enterprise systems alike. Enterprise systems however, typically \
+are stranger-visible, but POOFITEE ruleset produces stranger-INvisibility.  Gone \
+are the complex, buggy \"badguy detection\" algorithms of other firewalls.  More \
+unique still to POOFITEE is that the only continuously-running process it has is \
+a \"tail -f\" bash script line monitoring kernel log events for the purpose of \
+launching a script.  So POOFITEE is a firewall-plus paradigm, not a running \
+program.  For a similar reason, it is not an iptables front-end and does not \
+interfere with manual iptables manipluation, allowing you to fine-tune the rule-\
+set yourself.  Only trusted addresses can initiate a dialog under the POOFITEE \
+ruleset.  Of course, those source addresses can be spoofed, but when spoofed, a \
+two-way connection capable of stealing information is not really possible: the \
+legitimate computer owning the spoofed trusted address will receive return \
+communications and, without a reason to be in collusion with the spoofer, not \
+relay the information on to them.  Where public services are hosted, POOFITEE is \
+capable of adding pseudo application-layer/stateful protection to mere packet \
+filtering by virtue of a combination of delayed blacklisting and log file \
+monitoring: well-behaving, never-previously-blacklisted sources not inside \
+blacklisted network ranges can be whitelisted (non-persistent by default) if \
+they generate log file activity you've specified within some number of minutes.  \
+\"POOFITEE\" is derived from the descriptive phrase \"Packet filtering Owner Only\
+access Firewall - Invisible To Everyone Else\"."
+ghscreen2="\n\nThe advantages of using scripting over a compiled program are significant:\
+\n\n - most importantly - robust operation in indefinitely continuous duty\
+\n\n - less script complexity means less risk of programming bugs and\
+\n      mysterious, hard-to-troubleshoot resource limitations\
+\n\n - source code is simple and extremely easy for you to customize to your\
+\n      liking\
+\n\n - iptables rule changes are implemented instantly without any process\
+\n      restarts nor conflicts with iptables rules manipulated manually\
+\n\n - system operators can customize the behavior of all aspects of\
+\n      POOFITEE support scripts without learning to compile, and those\
+\n      customizations are implemented instantly.\
+\n\nThe disadvantages of scripting to compiled languages are normally considered \
+to be execution speed of the finished program and fine control of low-level \
+system functionalities.  POOFITEE is not practically affected by either, thanks \
+to the power that Linux scripting offers."
 fwscreen="POOFITEE\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`Information Screen\
 \n                        FIREWALLING WITH THIS SCRIPT SET\
 \n( As you read, please realize the difference between this installation \"helper\
@@ -2951,7 +2936,6 @@ restorescreen="POOFITEE\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\
 \nall over again.  This can be highly important when you don't know for sure that\
 \nthe person who needs to configure will know or remember the details of this\
 \nconfiguration."
-answer=""
 singinterf="\nBased on finding only one pluggable network interface, your intentions seem\
 \nto be to have this firewalling computer be a terminal (end) device rather than\
 \nan inline (passthrough) device.  That would result in any protective\
@@ -2959,61 +2943,79 @@ singinterf="\nBased on finding only one pluggable network interface, your intent
 \nwant this firewalling computer to protect other devices with its firewalling\
 \nservices, select"
 postfix_already_conf=""
-until ! [ -z $answer ];do
-     clear
-     printf "$startscreen"
-# exit
-########### remove answer and char set line below and uncomment out next line
-#    while true;do answer="fdrp";char="";[[ -z "$char" ]] && break
-     while IFS= read  -sn1 char;do [[ -z "$char" ]] && break
-        [[ "$answer$char" == "?" ]] && break
-        if [[ "$(printf "%d" "'$char")" == "27" ]];then # ' escape or extended key has been detected
-            read -rt 0.001 -n1 discard # read 2nd extended key field, timeout if real escape
-            [[ "$(printf "%d" "'$discard")" == "0" ]] && exit # '
-            read -rt 0.001 -n2 discard # read & discard 2nd extended key field, timeout if no more
-        elif [ "${answer%$char*}" == "$answer" ] && [[ "$char" =~ [felrdspFELRDSP] ]];then
-            char="${char,}"
-            printf "$char"
-            answer="$answer$char"
-        elif [ "$char" == "?" ] && ! [ "${answer: -1}" == " " ];then
-            printf "$char "
-            answer="$answer$char "
-        else
-            [[ "$(printf "%d" "'$char")" == "127" ]] && ! [[ -z $answer ]] && answer="${answer:0: -1}" # ' handles the backspace character
-            printf "\r$answer    \r$answer" # needed b/c when several keys are pressed simultaneously only first gets silented
+until ! [ -z "$answer" ];do
+    { if ! [[ $($pspath aux|$greppath -vw grep|$greppath -we pump -we dhclient -we udhcpc -we dhcpcd -we dhclient3|$greppath -w $external_net_interface|$wcpath -l) -ne 0 ]];then
+        $whiptailpath --separate-output --title "$maintitle" \
+        --backtitle  "$mainbacktitle"\
+        --checklist "$mainchecklisttest"\
+        --noitem \
+        17 75 8 \
+        "${maincheckitems[0]}" OFF \
+        "${maincheckitems[1]}" OFF \
+        "${maincheckitems[2]}" OFF \
+        "${maincheckitems[3]}" OFF \
+        "${maincheckitems[4]}" OFF \
+        "${maincheckitems[5]}" OFF \
+        "${maincheckitems[6]}" OFF \
+        "${maincheckitems[7]}" OFF
+    else
+        notdhcp="notdhcp"
+        mainchecklisttest+="\n\nNot available with this IP address: dynamic IP address change notifier\n"
+        $whiptailpath --separate-output --title "$maintitle" \
+        --backtitle  "$mainbacktitle" \
+        --checklist "$mainchecklisttest" \
+        --noitem \
+        19 75 7 \
+        "${maincheckitems[0]}" OFF \
+        "${maincheckitems[1]}" OFF \
+        "${maincheckitems[3]}" OFF \
+        "${maincheckitems[4]}" OFF \
+        "${maincheckitems[5]}" OFF \
+        "${maincheckitems[6]}" OFF \
+        "${maincheckitems[7]}" OFF
+    fi;}  2>answergui
+    [ "$?" != "0" ] && exit
+    halfnumofitems="$((${#maincheckitems[@]} / 2 - 1))"
+    while read line;do
+        for ((i=0;i<=halfnumofitems;i++));do
+            if [[ "$line" == "${maincheckitems[i]}" ]];then
+                answer+="${maincheckitems[i+((${#maincheckitems[@]} / 2))]}"
+                break
+            fi
+        done
+    done < answergui
+    rm answergui
+    clear
+    if [[ $answer =~ \? ]];then
+#        printf "  Since info is selected, no changes are to be made"
+        if [[ $answer == "?" ]];then
+            $whiptailpath --yesno \
+            --backtitle "POOFITEE  $version      Main menu will resume later      Information Screen" \
+            --title "Helper Script Overview" \
+            "$ghscreen1""$ghscreen2" \
+            --yes-button "Scrolled, now proceed" \
+            --no-button "Quit now" \
+            --scrolltext 22 76
+            [ "$?" != "0" ] && exit
         fi
-     done
-     if [ -z $answer$char ];then
-        exit
-     elif [[ $answer$char =~ \? ]];then
-        clear;printf "Selections: $answer$char";printf "  Since info is selected, no changes are to be made"
-        if [[ $answer$char == "?" ]];then
-             clear
-             printf "$ghscreen1"
-             press_a_key
-             clear
-             printf "$ghscreen2"
-             press_a_key
-             echo
-        fi
-        [[ $answer =~ f ]] || [[ $answer$char == "?" ]] && (clear;printf "$fwscreen\n";press_a_key;echo)
-        [[ $answer =~ e ]] || [[ $answer$char == "?" ]] && (clear;printf "$rcscreen\n";press_a_key;echo)
-        [[ $answer =~ l ]] || [[ $answer$char == "?" ]] && (clear;printf "$listscreen\n";press_a_key;echo)
-        [[ $answer =~ d ]] || [[ $answer$char == "?" ]] && (clear;printf "$dascreen\n";press_a_key;echo)
-        [[ $answer =~ p ]] || [[ $answer$char == "?" ]] && (clear;printf "$pkscreen\n";press_a_key;echo)
-        [[ $answer =~ s ]] || [[ $answer$char == "?" ]] && (clear;printf "$savescreen\n";press_a_key;echo)
-        [[ $answer =~ r ]] || [[ $answer$char == "?" ]] && (clear;printf "$restorescreen\n";press_a_key;echo)
+        [[ $answer =~ f ]] || [[ $answer == "?" ]] && (clear;printf "$fwscreen\n";press_a_key;echo)
+        [[ $answer =~ e ]] || [[ $answer == "?" ]] && (clear;printf "$rcscreen\n";press_a_key;echo)
+        [[ $answer =~ l ]] || [[ $answer == "?" ]] && (clear;printf "$listscreen\n";press_a_key;echo)
+        [[ $answer =~ d ]] || [[ $answer == "?" ]] && (clear;printf "$dascreen\n";press_a_key;echo)
+        [[ $answer =~ p ]] || [[ $answer == "?" ]] && (clear;printf "$pkscreen\n";press_a_key;echo)
+        [[ $answer =~ s ]] || [[ $answer == "?" ]] && (clear;printf "$savescreen\n";press_a_key;echo)
+        [[ $answer =~ r ]] || [[ $answer == "?" ]] && (clear;printf "$restorescreen\n";press_a_key;echo)
         answer=""
-     else
+    else
 #  1.  Accept selections from main screen
 #  2.  determine if any packages need installing, warn if no known installer found
 #  3.  Install the packages needed by the particular selections, except for mail
 #      -- if an installer is not found, inform operator to install listed programs
 # In Ubuntu (and probably Debian), install the ipset and xtables-addons-source packages. Then, run module-assistant auto-install xtables-addons, and ipset is ready to test
 #  packages required to install everything
-         echo
-         notinstalled="."
-         until [ -z "$notinstalled" ];do  # this loop is to set path vars after pkgs get installed, every last pkg so paths populate even after new installs
+        echo
+        notinstalled="."
+        until [ -z "$notinstalled" ];do  # this loop is to set path vars after pkgs get installed, every last pkg so paths populate even after new installs
             until ! [ -z "$goahead" ] && ! [ -z "$ackd" ] && [ "$goahead" == "true" ] || [ "$ackd" == "true" ];do
                   what_needs_to_be_installed checkawk
 #                  printf "There are $(what_needs_to_be_installed;echo "$?") things needing to be installed";read -srn1
@@ -3154,68 +3156,68 @@ until ! [ -z $answer ];do
             else
                  break
             fi
-         done  # this loop is to set path vars after pkgs get installed, every last pkg so paths populate even after new installs
-if ! [[ -z "$ipsetpath" ]];then
-     $ipsetpath list -t >&/dev/null || \
-     ( $lsmodpath|$greppath -e '^xt_set ' -e '^ip_set '  -e '^ipset ' -e '^xtset ' || \
-     (printf "\n\nThe ipset loadable kernel module is not automatically loaded for you.\
+        done  # this loop is to set path vars after pkgs get installed, every last pkg so paths populate even after new installs
+        if ! [[ -z "$ipsetpath" ]];then
+            $ipsetpath list -t >&/dev/null || \
+               ( $lsmodpath|$greppath -e '^xt_set ' -e '^ip_set '  -e '^ipset ' -e '^xtset ' || \
+               (printf "\n\nThe ipset loadable kernel module is not automatically loaded for you.\
 \nThis just happens to be the case with the particular Linux distro you're using.\
 \nYou'll have to load the ipset module manually and restart poofitee installer.  Here\
 \nis a web page that may help you with that:\
 \nhttp://www.fwbuilder.org/4.0/docs/users_guide5/Appendix.shtml\n" && exit )) #need to make the lsmod into a full path, but this checks to see whether we need to manually load the ipset maodule
-fi         
-         while true ;do
-             if ($getentpath passwd|$greppath -w ^poofitee >/dev/null);then
-                  poofitee_home_dir="$($getentpath passwd|$greppath -w ^poofitee|$awkpath -F: '{printf $6}')"
-             else
-                  poofitee_home_dir="$([[ -f poofitee_home_dir ]] && cat poofitee_home_dir)"
-                  [[ -z "$poofitee_home_dir" ]] && poofitee_home_dir="$poofitee_home_dir"
-                  clear
-                  printf "Specify a home directory which will be created for user poofitee, which is where\
+        fi         
+        while true;do
+            if ($getentpath passwd|$greppath -w ^poofitee >/dev/null);then
+                poofitee_home_dir="$($getentpath passwd|$greppath -w ^poofitee|$awkpath -F: '{printf $6}')"
+            else
+                poofitee_home_dir="$([[ -f poofitee_home_dir ]] && cat poofitee_home_dir)"
+                [[ -z "$poofitee_home_dir" ]] && poofitee_home_dir="$poofitee_home_dir"
+                clear
+                printf "Specify a home directory which will be created for user poofitee, which is where\
 \nthese scripts will be installed.  No deeper subdirectory will be used than what\
 \nyou specify here, so include any final isolating or descriptive subdirectory\
 \nlevel you will want:\n"
-                 read -e -r -i "$poofitee_home_dir" poofitee_home_dir
-                 echo
-                 echo "poofitee ALL=NOPASSWD:ALL" > /etc/sudoers.d/poofitee
+               read -e -r -i "$poofitee_home_dir" poofitee_home_dir
+               echo
+               echo "poofitee ALL=NOPASSWD:ALL" > /etc/sudoers.d/poofitee
 #                 echo "poofitee ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/poofitee
-                 chmod 0440 /etc/sudoers.d/poofitee
-                 $sedpath -i '/^sudo:.*,poofitee/b; s/^sudo:.*/&,poofitee/' /etc/group
-                 $adduserpath --home "$poofitee_home_dir" --system --shell /bin/bash --disabled-login --disabled-password poofitee --ingroup sudo
-                 user_poofitee_created_this_run="."
-             fi
-             if ! [[ -d "$poofitee_home_dir" ]];then
-                      sudo -u poofitee mkdir -p "$poofitee_home_dir" &>/dev/null && chmod 700 "$poofitee_home_dir" &>/dev/null
-                      [[ "$?" == "0" ]] && break
-                      echo "Unable to use that path"
-             fi
-             if ! [[ -d "$poofitee_home_dir/preparedness" ]];then
-                      sudo -u poofitee mkdir -p "$poofitee_home_dir/preparedness" &>/dev/null && chmod 700 "$poofitee_home_dir/preparedness" &>/dev/null
-                      [[ "$?" == "0" ]] && break
-                      echo "Unable to use that path"
-             else
+               chmod 0440 /etc/sudoers.d/poofitee
+               $sedpath -i '/^sudo:.*,poofitee/b; s/^sudo:.*/&,poofitee/' /etc/group
+               $adduserpath --home "$poofitee_home_dir" --system --shell /bin/bash --disabled-login --disabled-password poofitee --ingroup sudo
+               user_poofitee_created_this_run="."
+            fi
+            if ! [[ -d "$poofitee_home_dir" ]];then
+                 sudo -u poofitee mkdir -p "$poofitee_home_dir" &>/dev/null && chmod 700 "$poofitee_home_dir" &>/dev/null
+                 [[ "$?" == "0" ]] && break
+                 echo "Unable to use that path"
+            fi
+            if ! [[ -d "$poofitee_home_dir/preparedness" ]];then
+                 sudo -u poofitee mkdir -p "$poofitee_home_dir/preparedness" &>/dev/null && chmod 700 "$poofitee_home_dir/preparedness" &>/dev/null
+                 [[ "$?" == "0" ]] && break
+                 echo "Unable to use that path"
+            else
                  break
-             fi
-         done
-         echo "$poofitee_home_dir" > poofitee_home_dir # handy with subsequent runs of this script, will know where everything is
+            fi
+        done
+        echo "$poofitee_home_dir" > poofitee_home_dir # handy with subsequent runs of this script, will know where everything is
 #       chown poofitee "$poofitee_home_dir"
 #       chmod 770 "$poofitee_home_dir"
-         poofitee_home_dir="${poofitee_home_dir%%/}"
-         if ! [[  -z "$iptablespath" ]];then
-              back_up_iptables_ruleset current && printf "\nIf you feel the changes that this script makes to your iptables ruleset are not\
+        poofitee_home_dir="${poofitee_home_dir%%/}"
+        if ! [[  -z "$iptablespath" ]];then
+            back_up_iptables_ruleset current && printf "\nIf you feel the changes that this script makes to your iptables ruleset are not\
 \nwhat you wanted, restore the current ruleset by running\
 \n\niptables-restore < \"$poofitee_home_dir/iptables_ruleset.$current_time\"\n\n" \
                || printf "Your current iptables ruleset did not get backed up as expected.  You should\
 \npress ctl-c now and fix that, or you could be in a frustrating situation if\
 \nsomething goes awry with this install.\n"
-         fi
-         chown poofitee "$poofitee_home_dir/iptables_ruleset.$current_time"
+        fi
+        chown poofitee "$poofitee_home_dir/iptables_ruleset.$current_time"
 #       amount_of_free_memory="$($freepath -b|$awkpath '{if ($1=="Mem:"){printf $4;exit}}')"
-         ! [[ -d "$poofitee_home_dir/ramdisk" ]] && sudo -u poofitee mkdir "$poofitee_home_dir/ramdisk" &>/dev/null && chown poofitee "$poofitee_home_dir/ramdisk" &>/dev/null
-         (mount|$greppath "^tmpfs.*$poofitee_home_dir/ramdisk") &>/dev/null || mount -t tmpfs -o size=0 tmpfs "$poofitee_home_dir/ramdisk" &>/dev/null # the size when set to 0 is not limited.  Let POOFITEE use all it needs
-         $greppath "^.*$poofitee_home_dir/ramdisk" < /etc/fstab &>/dev/null || echo "tmpfs      "$poofitee_home_dir/ramdisk"      tmpfs       size=0      0     0" >> /etc/fstab
-         if [[ "$answer" =~ f ]];then
-         printf "."
+        ! [[ -d "$poofitee_home_dir/ramdisk" ]] && sudo -u poofitee mkdir "$poofitee_home_dir/ramdisk" &>/dev/null && chown poofitee "$poofitee_home_dir/ramdisk" &>/dev/null
+        (mount|$greppath "^tmpfs.*$poofitee_home_dir/ramdisk") &>/dev/null || mount -t tmpfs -o size=0 tmpfs "$poofitee_home_dir/ramdisk" &>/dev/null # the size when set to 0 is not limited.  Let POOFITEE use all it needs
+        $greppath "^.*$poofitee_home_dir/ramdisk" < /etc/fstab &>/dev/null || echo "tmpfs      "$poofitee_home_dir/ramdisk"      tmpfs       size=0      0     0" >> /etc/fstab
+        if [[ "$answer" =~ f ]];then
+            printf "."
 #            echo "firewalling"
 #             printf "iptables, including ruleset and crontab entries will be set up next.\
 #\n   Press a key...";read -n1 -r
@@ -3223,26 +3225,26 @@ fi
 #             printf "\nConfiguring..."
              install_buildiptablessh
 #             echo "going off to tail f lines and recvg script"
-             sendmail_works_or_not
-             if [[ -z $sendmail_works ]];then
-                  outemail_warnings
-                  press_a_key
-             fi
-             conf_postfix
-             install_tail_f_lines_and_receiving_script
-         fi
-         if [[ "$answer" =~ e ]];then
-#             printf "remote controlling"
-             sendmail_works_or_not
-             if [[ -z $sendmail_works ]];then
-                  outemail_warnings
-                  press_a_key
-             fi
-             conf_postfix
-             install_rc
-         fi
-         if [[ "$answer" =~ l ]];then
-              clear;printf -- "       lists (white, black, & static_trusted) to/from storage\
+            sendmail_works_or_not
+            if [[ -z $sendmail_works ]];then
+                outemail_warnings
+                press_a_key
+            fi
+            conf_postfix
+            install_tail_f_lines_and_receiving_script
+        fi
+        if [[ "$answer" =~ e ]];then
+#            printf "remote controlling"
+            sendmail_works_or_not
+            if [[ -z $sendmail_works ]];then
+                 outemail_warnings
+                 press_a_key
+            fi
+            conf_postfix
+            install_rc
+        fi
+        if [[ "$answer" =~ l ]];then
+            clear;printf -- "       lists (white, black, & static_trusted) to/from storage\
 \n\nThis menu option is under development.\
 \n\n   s -- Save $ipsetpath sets (blacklist, blacklist_cidr, whitelist, whitelist_cidr,\
 \n        static_trusted, and static_trusted_cidr) of this firewall's current\
@@ -3250,68 +3252,68 @@ fi
 \n\n   e -- Enter $ipsetpath sets into this firewall's configuration through the keyboard\
 \n        or from files that conform to $ipsetpath \'save\' conventions\
 \n\n"
-              if (press_a_key s e);then
-                  if ($getentpath passwd|$greppath -w ^poofitee >/dev/null);then
-                       directory_for_list_files="$([[ -f "$poofitee_home_dir/directory_for_list_files" ]] && cat "$poofitee_home_dir/directory_for_list_files")"
-                       [[ -z "$directory_for_list_files" ]] && directory_for_list_files="$PWD"
-                   fi
-                   while printf "\nEnter the directory name where you want the firewall $ipsetpath sets to be saved to:\n";read -er -i "$directory_for_list_files" directory_for_list_files;do
-                        [[ -d "$directory_for_list_files" ]] && break
-                        printf "\nNot a valid directory. Try again.  "
-                        press_a_key
-                   done
-                   echo "$directory_for_list_files" > "$poofitee_home_dir/directory_for_list_files"
-                   $ipsetpath save -file "$directory_for_list_files/ipset.sets"
+            if (press_a_key s e);then
+                if ($getentpath passwd|$greppath -w ^poofitee >/dev/null);then
+                     directory_for_list_files="$([[ -f "$poofitee_home_dir/directory_for_list_files" ]] && cat "$poofitee_home_dir/directory_for_list_files")"
+                     [[ -z "$directory_for_list_files" ]] && directory_for_list_files="$PWD"
+                fi
+                while printf "\nEnter the directory name where you want the firewall $ipsetpath sets to be saved to:\n";read -er -i "$directory_for_list_files" directory_for_list_files;do
+                     [[ -d "$directory_for_list_files" ]] && break
+                     printf "\nNot a valid directory. Try again.  "
+                     press_a_key
+                done
+                echo "$directory_for_list_files" > "$poofitee_home_dir/directory_for_list_files"
+                $ipsetpath save -file "$directory_for_list_files/ipset.sets"
 #                   $ipsetpath save blacklist -file "$directory_for_list_files/poofitee_blacklist"
 #                   $ipsetpath save blacklist_cidr  -file "$directory_for_list_files/poofitee_blacklist_cidr"
 #                   $ipsetpath save whitelist  -file "$directory_for_list_files/poofitee_whitelist"
 #                   $ipsetpath save whitelist_cidr  -file "$directory_for_list_files/poofitee_whitelist_cidr"
 #                   $ipsetpath save static_trusted  -file "$directory_for_list_files/poofitee_static_trusted"
 #                   $ipsetpath save static_trusted_cidr  -file "$directory_for_list_files/poofitee_static_trusted_cidr"
-                   printf "The files are now saved to $directory_for_list_files"
-               else
-                  if ($getentpath passwd|$greppath -w ^poofitee >/dev/null);then
-                       directory_for_list_files="$([[ -f "$poofitee_home_dir/directory_for_list_files" ]] && cat "$poofitee_home_dir/directory_for_list_files")"
-                       [[ -z "$directory_for_list_files" ]] && directory_for_list_files="$PWD"
-                   fi
-                   while printf "\nEnter the directory name containing the files that you want the firewall $ipsetpath sets to be configured from:\n";read -er -i "$directory_for_list_files" directory_for_list_files;do
-                        [[ -d "$directory_for_list_files" ]] && break
-                        printf "\nNot a valid directory. Try again.  "
-                        press_a_key
-                   done
-                   echo "$directory_for_list_files" > "$poofitee_home_dir/directory_for_list_files"
-                   $ipsetpath restore -file "$directory_for_list_files/ipset.sets"
+                printf "The files are now saved to $directory_for_list_files"
+            else
+                if ($getentpath passwd|$greppath -w ^poofitee >/dev/null);then
+                    directory_for_list_files="$([[ -f "$poofitee_home_dir/directory_for_list_files" ]] && cat "$poofitee_home_dir/directory_for_list_files")"
+                    [[ -z "$directory_for_list_files" ]] && directory_for_list_files="$PWD"
+                fi
+                while printf "\nEnter the directory name containing the files that you want the firewall $ipsetpath sets to be configured from:\n";read -er -i "$directory_for_list_files" directory_for_list_files;do
+                     [[ -d "$directory_for_list_files" ]] && break
+                     printf "\nNot a valid directory. Try again.  "
+                     press_a_key
+                done
+                echo "$directory_for_list_files" > "$poofitee_home_dir/directory_for_list_files"
+                $ipsetpath restore -file "$directory_for_list_files/ipset.sets"
 #                   $ipsetpath restore blacklist -file "$directory_for_list_files/poofitee_blacklist"
 #                   $ipsetpath restore blacklist_cidr  -file "$directory_for_list_files/poofitee_blacklist_cidr"
 #                   $ipsetpath restore whitelist  -file "$directory_for_list_files/poofitee_whitelist"
 #                   $ipsetpath restore whitelist_cidr  -file "$directory_for_list_files/poofitee_whitelist_cidr"
 #                   $ipsetpath restore static_trusted  -file "$directory_for_list_files/poofitee_static_trusted"
 #                   $ipsetpath restore static_trusted_cidr  -file "$directory_for_list_files/poofitee_static_trusted_cidr"
-                   printf "The $ipsetpath sets are now restored from $directory_for_list_files"
-               fi
-         fi
-         if [[ "$answer" =~ d ]] && ! [[ "$notdhcp" == "notdhcp" ]];then
+                printf "The $ipsetpath sets are now restored from $directory_for_list_files"
+            fi
+        fi
+        if [[ "$answer" =~ d ]] && ! [[ "$notdhcp" == "notdhcp" ]];then
 #             printf "dynamic IP change notify"
-             sendmail_works_or_not
-             if [[ -z $sendmail_works ]];then
-                  outemail_warnings
-                  press_a_key
-             fi
-             conf_postfix
-             install_rc
-             install_dynIPch
-         fi
-         if [[ "$answer" =~ p ]];then
-             sendmail_works_or_not
-             if [[ -z $sendmail_works ]];then
-                  outemail_warnings
-                  press_a_key
-             fi
-             conf_postfix
-             install_port_knocking
-         fi
-         [[ "$answer" =~ [fp] ]] && advise_to_verify_persistency
-     fi
+            sendmail_works_or_not
+            if [[ -z $sendmail_works ]];then
+                outemail_warnings
+                press_a_key
+            fi
+            conf_postfix
+            install_rc
+            install_dynIPch
+        fi
+        if [[ "$answer" =~ p ]];then
+            sendmail_works_or_not
+            if [[ -z $sendmail_works ]];then
+                outemail_warnings
+                press_a_key
+            fi
+            conf_postfix
+            install_port_knocking
+        fi
+        [[ "$answer" =~ [fp] ]] && advise_to_verify_persistency
+    fi
 done
 exit
 
@@ -3381,4 +3383,3 @@ exit
 #
 # ip sets can then be created and used as per documentation. See http://ubuntuforums.org/showthread.php?t=1590923 for an example.
 #
-
