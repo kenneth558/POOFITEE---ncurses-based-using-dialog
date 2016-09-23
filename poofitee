@@ -2749,7 +2749,8 @@ $whiptailpath --title "WELCOME TO THE POOFITEE INSTALLER!" \
 \n\
 \nSpecific limitations of this version -\
 \n\
-\n- No ability to differentiate between nor work with initsystem types\
+\n- No ability to differentiate between nor work with initsystem types.\
+\n    For persistence of this installation, you're on your own.\
 \n\
 \n- No integrated dependencies support is provided\
 \n\
