@@ -1,6 +1,3 @@
-Currently needing repairs....please be patient
-
-
 #! /bin/bash
 version="version 0.0.1"
 #
@@ -28,7 +25,7 @@ version="version 0.0.1"
 # TODO: before anything that requires iptables to be persistent is started, make sure iptables is persistently configured
 # TODO:  before installing on Raspbian, set up /etc/apt/sources.list with some valid repository like: deb http://mirror.glennmcgurrin.com/raspbian/ jessie main contrib non-free rpi
 # installing postfix is different for different distros, may not be "postmap"
-# Why anyone would want a blacklist to accumulate:
+# So why anyone would want a blacklist to accumulate:
 #  1) differentiate between neutral and hostile when providing public services,
 #  2) assist in selecting ports for knock sequence or email knock by which are least probed,
 #  3) just to have a blacklist so admin/owner can blacklist their own choices of Internet addresses,
@@ -127,39 +124,12 @@ version="version 0.0.1"
 #ENABLE_ROUTING (default: 0) – if set different than 0 then routing is enabled (in /proc/sys/net/ipv4/ip_forward and /proc/sys/net/ipv6/conf/all/forwarding), otherwise it’s not.
 #
 ################  FUNCTIONS FIRST, THEN MAIN:
-switch_from_more_common_package_to_less_common_package () {
-# args are: #1=more common package name, #2=more common binary name, #3=less common package name, #4=less common binary name
-                 if [[ "$not_installed_single_line" =~ ^dnsutils ]];then
-                      if ! [[ -z "$dnsutils_already_given_a_chance" ]];then
-                           digpath=$($whereispath $binaryflag drill);digpath="${digpath#*:}";digpath="${digpath# }";digpath="${digpath%% *}"
-#                           printf "...Not a problem...\n"
-                           if [[ -z $digpath ]];then
-                                 eval "$xargspath -a <(printf $not_installed_single_line|$sedpath 's/dnsutils/ldns/1') -r -- $sudopath $installerpath"
-                                 digpath=$($whereispath $binaryflag drill);digpath="${digpath#*:}";digpath="${digpath# }";digpath="${digpath%% *}"
-                                 what_needs_to_be_installed
-                           fi
-                      else
-                           dnsutils_already_given_a_chance="anyvaluewillwork"
-                      fi
-                 fi
-}
 ensure_connection () {
-printf "Ensuring an Internet connection exists.  Please wait..."
-# if [[ -z "$digpath" ]];then
           while ! [[ "$(ping -c1 opendns.com &>/dev/null;echo "$?")" == "0" ]];do
                printf "\r\033[KNo internet connection found with full DNS.  Press a key when corrected or to ignore...";read -rsn 1;read -rst 0.001 -n3
                break
           done
-#elif ! [[ "$($digpath +short myip.opendns.com @resolver1.opendns.com >/dev/null)" =~ ^((1?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\.){3}(1?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])$ ]];then
-#          while ! [[ "$(ping -c1 opendns.com &>/dev/null;echo "$?")" == "0" ]];do
-#               printf "\r\033[KNo internet connection found with full DNS.  Press a key when corrected or to ignore...";read -rsn 1;read -rst 0.001 -n3
-#               break
-#          done
-#fi
-echo
 }
-# which drill netfilter-persistent iptables dig ipset inotifywait stdbuf crontab timeout sleep ifdown ifup date bash bc wc free at visudo nice mail mailx sendmail postmap awk gawk mawk nawk 2>/dev/null
-# locate *-persistent
 what_needs_to_be_installed () {
 [[ -z "$inotifywaitpath" ]] && inotifywaitpath=$($whereispath $binaryflag inotifywait);inotifywaitpath="${inotifywaitpath#*:}";inotifywaitpath="${inotifywaitpath# }";inotifywaitpath="${inotifywaitpath%% *}"
 [[ -z "$iptablespath" ]] && iptablespath=$($whereispath $binaryflag iptables);iptablespath="${iptablespath#*:}";iptablespath="${iptablespath# }";iptablespath="${iptablespath%% *}"
@@ -178,8 +148,6 @@ what_needs_to_be_installed () {
 [[ -z "$ipsetpath" ]] && ipsetpath=$($whereispath $binaryflag ipset);ipsetpath="${ipsetpath#*:}";ipsetpath="${ipsetpath# }";ipsetpath="${ipsetpath%% *}"
 [[ -z "$visudopath" ]] && visudopath=$($whereispath $binaryflag visudo);visudopath="${visudopath#*:}";visudopath="${visudopath# }";visudopath="${visudopath%% *}"
 [[ -z "$nicepath" ]] && nicepath=$($whereispath $binaryflag nice);nicepath="${nicepath#*:}";nicepath="${nicepath# }";nicepath="${nicepath%% *}"
-[[ -z "$digpath" ]] && digpath=$($whereispath $binaryflag dig);digpath="${digpath#*:}";digpath="${digpath# }";digpath="${digpath%% *}"
-[[ -z "$digpath" ]] && digpath=$($whereispath $binaryflag drill);digpath="${digpath#*:}";digpath="${digpath# }";digpath="${digpath%% *}"
 [[ -z "$netfiltperspath" ]] && netfiltperspath=$($whereispath $binaryflag netfilter-persistent);netfiltperspath="${netfiltperspath#*:}";netfiltperspath="${netfiltperspath# }";netfiltperspath="${netfiltperspath%% *}"
 # [[ -d "/usr/share/netfilter-persistent/plugins.d" ]] && netfiltperspath=$($whereispath $binaryflag netfilter-persistent);netfiltperspath="${netfiltperspath#*:}";netfiltperspath="${netfiltperspath# }";netfiltperspath="${netfiltperspath%% *}"
 [[ -z "$mailpath" ]] && mailpath=$($whereispath $binaryflag mail);mailpath="${mailpath#*:}"
@@ -195,40 +163,40 @@ if ! [[ -z "$1" ]] || [[ "$gawkpath" == "installandcheckme" ]] || [[ "$mawkpath"
               until false;do
 # Check here for awk functionality with stdbuf
                   printf "Checking $([[ "$gawkpath" == "installandcheckme" ]] && printf "gawk$([[ "$mawkpath" == "installandcheckme" ]] && printf ", mawk,") and " || [[ "$mawkpath" == "installandcheckme" ]] && printf "mawk and ")awk for functionality..."
-                  echo "" > awktestbed
-                  nohup $tailpath -fn0 awktestbed 2>/dev/null|$stdbufpath -o0 $awkpath '{print $1}' > awktestresults 2>/dev/null &
+                  echo "" > /tmp/fifos_and_temp_files_for_poofitee_installer/awktestbed
+                  nohup $tailpath -fn0 /tmp/fifos_and_temp_files_for_poofitee_installer/awktestbed 2>/dev/null|$stdbufpath -o0 $awkpath '{print $1}' > /tmp/fifos_and_temp_files_for_poofitee_installer/awktestresults 2>/dev/null &
                   tailawktestpid="$!"
                   sleep 1
-                  echo "testline" >> awktestbed
+                  echo "testline" >> /tmp/fifos_and_temp_files_for_poofitee_installer/awktestbed
                   sleep 1
-                  if ! [[ "$($tailpath -n1 awktestresults)" == "testline" ]];then #try/use gawk instead
+                  if ! [[ "$($tailpath -n1 /tmp/fifos_and_temp_files_for_poofitee_installer/awktestresults)" == "testline" ]];then #try/use gawk instead
                        gawkpath="$($whereispath $binaryflag gawk)";gawkpath="${gawkpath#*:}";gawkpath="${gawkpath# }";gawkpath="${gawkpath%% *}"
                        if ! [[ -z "$gawkpath" ]];then
                             kill $tailawktestpid &>/dev/null
-                            $tailpath -fn0 awktestbed 2>/dev/null|$stdbufpath -o0 $gawkpath '{print $1}' > awktestresults &
+                            $tailpath -fn0 /tmp/fifos_and_temp_files_for_poofitee_installer/awktestbed 2>/dev/null|$stdbufpath -o0 $gawkpath '{print $1}' > /tmp/fifos_and_temp_files_for_poofitee_installer/awktestresults &
                             tailawktestpid="$!"
                             sleep 1
-                            echo "testline" >> awktestbed
+                            echo "testline" >> /tmp/fifos_and_temp_files_for_poofitee_installer/awktestbed
                             sleep 1
                        else
 #install gawk, then check gawk.  If success later, change awkpath
                             gawkpath="installandcheckme"
                        fi
-                       if ! [[ "$($tailpath -n1 awktestresults 2>/dev/null)" == "testline" ]];then #warn
+                       if ! [[ "$($tailpath -n1 /tmp/fifos_and_temp_files_for_poofitee_installer/awktestresults 2>/dev/null)" == "testline" ]];then #warn
                             mawkpath="$($whereispath $binaryflag mawk)";mawkpath="${mawkpath#*:}";mawkpath="${mawkpath# }";mawkpath="${mawkpath%% *}"
                             if ! [[ -z "$mawkpath" ]];then
                                  kill $tailawktestpid &>/dev/null
-                                 $tailpath -fn0 awktestbed 2>/dev/null|$stdbufpath -o0 $mawkpath '{print $1}' > awktestresults 2>/dev/null &
+                                 $tailpath -fn0 /tmp/fifos_and_temp_files_for_poofitee_installer/awktestbed 2>/dev/null|$stdbufpath -o0 $mawkpath '{print $1}' > /tmp/fifos_and_temp_files_for_poofitee_installer/awktestresults 2>/dev/null &
                                  tailawktestpid="$!"
                                  sleep 1
-                                 echo "testline" >> awktestbed
+                                 echo "testline" >> /tmp/fifos_and_temp_files_for_poofitee_installer/awktestbed
                                  sleep 1
                             else
 #install mawk, then check mawk.  If success later, change awkpath and break this loop
                                  mawkpath="installandcheckme"
                                  break
                             fi
-                            if ! [[ "$($tailpath -n1 awktestresults 2>/dev/null)" == "testline" ]];then #warn
+                            if ! [[ "$($tailpath -n1 /tmp/fifos_and_temp_files_for_poofitee_installer/awktestresults 2>/dev/null)" == "testline" ]];then #warn
                                  if [[ "$gawkpath" != "installandcheckme" ]];then
                                       cat <<-EOF
 					WARNING:
@@ -254,13 +222,13 @@ if ! [[ -z "$1" ]] || [[ "$gawkpath" == "installandcheckme" ]] || [[ "$mawkpath"
                                       cat <<-EOF
 					Here is the test code snippet that awk, mawk, or gawk needs to succeed with:
 
-					echo "" > awktestbed
-					$tailpath -fn0 awktestbed 2>/dev/null|$stdbufpath -o0 awk '{print \$1}' > awktestresults 2>/dev/null &
+					echo "" > /tmp/fifos_and_temp_files_for_poofitee_installer/awktestbed
+					$tailpath -fn0 /tmp/fifos_and_temp_files_for_poofitee_installer/awktestbed 2>/dev/null|$stdbufpath -o0 awk '{print \$1}' > /tmp/fifos_and_temp_files_for_poofitee_installer/awktestresults 2>/dev/null &
 					tailawktestpid="\$!"
-					echo "testline" >> awktestbed
+					echo "testline" >> /tmp/fifos_and_temp_files_for_poofitee_installer/awktestbed
 					sleep 1
 					kill \$tailawktestpid &>/dev/null
-					if [[ -z "\$(cat awktestresults)" ]];then echo "This awk version fails";else echo "This awk version succeeds";fi
+					if [[ -z "\$(cat /tmp/fifos_and_temp_files_for_poofitee_installer/awktestresults)" ]];then echo "This awk version fails";else echo "This awk version succeeds";fi
 					EOF
                                       press_a_key
                                  fi
@@ -292,8 +260,8 @@ if ! [[ -z "$1" ]] || [[ "$gawkpath" == "installandcheckme" ]] || [[ "$mawkpath"
               if [[ $(kill -0 "$tailawktestpid";echo "$?") == "0" ]];then
                    kill $tailawktestpid &>/dev/null
               fi
-              rm awktestresults &>/dev/null
-              rm awktestbed &>/dev/null
+              rm /tmp/fifos_and_temp_files_for_poofitee_installer/awktestresults &>/dev/null
+              rm /tmp/fifos_and_temp_files_for_poofitee_installer/awktestbed &>/dev/null
           fi
      fi
 fi
@@ -314,12 +282,12 @@ pronotinstalled="$(printf "$notinstalled"|$sortpath|$uniqpath)\n"
 # packages are in alpha order so duplicates got removed, now we need to rearrange to workable order
 # packages that need to be tried once and changed go first, then awk/gawk/mawk/nawk
 # netfilter-persistent first, then awk/gawk/mawk/nawk
-printf "$pronotinstalled"|while read package;do [[ "$package" == "netfilter-persistent" ]] && echo "$package" > notinstalled;done
-printf "$pronotinstalled"|while read package;do [[ "$package" != "netfilter-persistent" ]] && [[ "$package" =~ ^gawk$|^mawk$|^nawk$ ]] && echo "$package" >> notinstalled;done
-printf "$pronotinstalled"|while read package;do [[ "$package" != "netfilter-persistent" ]] && ! [[ "$package" =~ ^gawk$|^mawk$|^nawk$ ]] && echo "$package" >> notinstalled;done
-notinstalled=$(cat notinstalled)
+printf "$pronotinstalled"|while read package;do [[ "$package" == "netfilter-persistent" ]] && echo "$package" > /tmp/fifos_and_temp_files_for_poofitee_installer/notinstalled;done
+printf "$pronotinstalled"|while read package;do [[ "$package" != "netfilter-persistent" ]] && [[ "$package" =~ ^gawk$|^mawk$|^nawk$ ]] && echo "$package" >> /tmp/fifos_and_temp_files_for_poofitee_installer/notinstalled;done
+printf "$pronotinstalled"|while read package;do [[ "$package" != "netfilter-persistent" ]] && ! [[ "$package" =~ ^gawk$|^mawk$|^nawk$ ]] && echo "$package" >> /tmp/fifos_and_temp_files_for_poofitee_installer/notinstalled;done
+notinstalled=$(cat /tmp/fifos_and_temp_files_for_poofitee_installer/notinstalled)
 notinstalled+="\n"
-rm notinstalled
+rm /tmp/fifos_and_temp_files_for_poofitee_installer/notinstalled
 not_installed_single_line="$(printf "$notinstalled"|$awkpath '{gsub("\\n"," ");printf $0" "}')"
 not_installed_single_line="${not_installed_single_line:: -1}"
 [ -z "$not_installed_single_line" ] && return 0
@@ -444,7 +412,7 @@ fi
 if [[ "${octets[0]}" != "192" ]] || [[ "${octets[1]}" != "168" ]];then
      localresult+="3"
 fi
-return localresult
+return $((localresult))
 }
 adjust_for_private_ip () {
 $ipsetpath del poofitee_bogons,privateIPs_cidr  10.0.0.0/8 &>/dev/null
@@ -472,30 +440,31 @@ advise_to_verify_persistency () {
 # /usr/share/netfilter-persistent/plugins.d/14-poofitee-ip4tables
 # $([[ -z "$iptabsavepath" ]] && printf "$netfiltperspath save" || printf "$iptabsavepath") >/dev/null  || $ipsetpath save > /etc/iptables/ipset.sets
 
-cat << EOF
-YOU ARE NOT FINISHED YET.
-
-The present state and direction of the packet filtering packages providing
-persistency are inconsistent between distros, are changing, and are not
-predictable.  PLEASE exercise due diligence in taking care of that aspect of
-this installation.
-
-You must next twice or thrice verify functionality after reboots.  Especially
-check for iptables black and whitelist rules in $ipsetpath being persistent.  At a
-minimum, $ipsetpath and iptables both need to be made persistent.
-
-Note: if you need the pseudo-application layer firewalling, you'll next need to
-code the "process_logfile_line" script to your needs.  Then modify the iptables
-ruleset to log the packets with the log- prefix text that will trigger your
-script coding.  The expected technique is to echo the blacklisting command into
-'at now+min', delaying it enough minutes to allow log file entries to manifest.
-The command scheduled with 'at' could include some type of log file coordination
-before blacklisting.  Don't forget to verify persistency afterwards.
-
-Thank you for using POOFITEE.  God loves you, pass it on.
-
-- The POOFITEE development team, Kenneth L. Anderson, lead developer
-EOF
+showthis "\
+<center>I AM FINISHED, BUT YOU ARE NOT.\
+\n\n\
+The present state and direction of the packet filtering packages providing \
+persistency are inconsistent between distros and fluid, and thus are not \
+predictable for the purposes of writing this installer.  PLEASE exercise \
+due diligence in taking care of that aspect of \
+this installation:\
+\n\n\
+You must next twice or thrice verify functionality after reboots.  Especially \
+check for iptables black and whitelist rules in $ipsetpath being persistent.  At a \
+minimum, $ipsetpath and iptables both need to be made persistent.\
+\n\n\
+Note: if you need the pseudo-application layer firewalling, you'll next need to \
+code the \"process_logfile_line\" script to your needs.  Then modify the iptables \
+ruleset to log the packets with the log- prefix text that will trigger your \
+script coding.  The expected technique is to echo the blacklisting command into \
+'at now+min', delaying it enough minutes to allow log file entries to manifest.  \
+The command scheduled with 'at' could include some type of log file coordination \
+before blacklisting.  Don't forget to verify persistency afterwards.\
+\n\n\
+Thank you for using POOFITEE.  God loves you, pass it on.\
+\n\n\
+<center>The POOFITEE development team, Kenneth L. Anderson, lead developer" infobox \
+"IMPORTANT MESSAGE" $globalbacktitle
 }
 set_notinstalled_var () {
 ! [[ -z "$gawkpath" ]] && [[ "$gawkpath" == "installandcheckme" ]] && notinstalled+="gawk\n"
@@ -512,14 +481,8 @@ set_notinstalled_var () {
 [[ -z "$nicepath" ]] && notinstalled+="coreutils\n"
 [[ -z "$sendmail_works" ]] && [[ -z $postmappath ]] && notinstalled+="postmap\npostfix\n"
 [[ -z "$ipsetpath" ]] && notinstalled+="ipset\n"
-[[ -z "$digpath" ]] && notinstalled+="dnsutils\n"
+[[ -z "$curlpath" ]] && notinstalled+="curl\n"
 }
-
-press_a_key () {
-printf "press $(! [[ -z "$1$2" ]] && printf "$1/$2" || printf "any key"), Ctrl-c aborts...";read -rsn 1;read -rst 0.001 -n3 discard
-[[ "$REPLY" == "$1" ]] && return 0 || return 1
-}
-
 install_firewall_cronentries () {
 #  Only need to confirm if there are entries in crontab
 printf "."
@@ -571,13 +534,13 @@ if ! ($sudopath -u poofitee ps u|$greppath -v grep|$greppath "$xargspath"|$grepp
 	nohup $sudopath $nicepath -n-15 $sudopath $tailpath -F -n 0 /var/log/kern.log|$greppath --line-buffer ' SRC='|$greppath --line-buffer -vE 'SRC=0\.0\.0\.0|SRC=127\.0\.0\.1|SRC=10\.|SRC=172\.1[6-9]\.|SRC=172\.2.\.|SRC=172\.3[01]\.|SRC=192\.168\.'|$stdbufpath -o0 $awkpath '{for (i=6;i<=NF;i++) {if (\$i ~ "^SRC=") {{gsub("SRC=","",\$i); printf \$i" \\""} printf "kern.log "\$1" "\$2" "\$3; for (j=i;j<=NF;j++) {if (\$j ~ "^PROTO=" || \$j ~ "^SPT=" || \$j ~ "^DPT" || ((\$j ~ "^URGP") && (\$j !~ "^URGP=0$")) || \$j ~ "^SYN$" || \$j ~ "^ACK$" || \$j ~ "^FIN$" || \$j ~ "^PSH$" || \$j ~ "^RST$") {printf " "\$j}} printf "\\" \\""; for (j=6;j<i;j++) {printf " "\$j} print "\\"";i=NF+1}}}'|$xargspath -L 1 "$poofitee_home_dir/process_logfile_line"  &>/dev/null &
 
 	SCRIPT_END
-	) > /tmp/poofitee/launch_complex_cron_line1
-        chown poofitee /tmp/poofitee/launch_complex_cron_line1
-	chmod 700 /tmp/poofitee/launch_complex_cron_line1
+	) > /tmp/fifos_and_temp_files_for_poofitee_installer/launch_complex_cron_line1
+        chown poofitee /tmp/fifos_and_temp_files_for_poofitee_installer/launch_complex_cron_line1
+	chmod 700 /tmp/fifos_and_temp_files_for_poofitee_installer/launch_complex_cron_line1
 	# Cannot proceed until "$poofitee_home_dir/toemailadds" is created
       # mv toemailadds "$poofitee_home_dir/toemailadds"
       # chown poofitee "$poofitee_home_dir/toemailadds"
-	$sudopath -u poofitee /tmp/poofitee/launch_complex_cron_line1
+	$sudopath -u poofitee /tmp/fifos_and_temp_files_for_poofitee_installer/launch_complex_cron_line1
 fi
 if ! ($sudopath -u poofitee ps u|$greppath -v grep|$greppath "$xargspath"|$greppath "$poofitee_home_dir/process_logfile_line" &>/dev/null && $sudopath -u poofitee ps u|$greppath "auth.log" &>/dev/null);then
 	$sudopath -u poofitee mkdir /tmp/poofitee &>/dev/null
@@ -586,13 +549,13 @@ if ! ($sudopath -u poofitee ps u|$greppath -v grep|$greppath "$xargspath"|$grepp
 	#!/bin/bash
 #	nohup $sudopath $nicepath -n15 $sudopath $tailpath -F -n 0 /var/log/auth.log||$xargspath -L 1 "$poofitee_home_dir/process_logfile_line"  &>/dev/null &
 	SCRIPT_END
-	) > /tmp/poofitee/launch_complex_cron_line2
-        chown poofitee /tmp/poofitee/launch_complex_cron_line2
-	chmod 700 /tmp/poofitee/launch_complex_cron_line2
+	) > /tmp/fifos_and_temp_files_for_poofitee_installer/launch_complex_cron_line2
+        chown poofitee /tmp/fifos_and_temp_files_for_poofitee_installer/launch_complex_cron_line2
+	chmod 700 /tmp/fifos_and_temp_files_for_poofitee_installer/launch_complex_cron_line2
 	# Cannot proceed until "$poofitee_home_dir/toemailadds" is created
       # mv toemailadds "$poofitee_home_dir/toemailadds"
       # chown poofitee "$poofitee_home_dir/toemailadds"
-	$sudopath -u poofitee /tmp/poofitee/launch_complex_cron_line2
+	$sudopath -u poofitee /tmp/fifos_and_temp_files_for_poofitee_installer/launch_complex_cron_line2
 fi
 
 printf "\ncrontab for user poofitee set up...Original can be found in $poofitee_home_dir/cronentries\n"
@@ -827,7 +790,7 @@ if ! [[ -z "$likeliest_internal_net_interface" ]];then
      $iptablespath -w -N poofitee_knockerstest 2>/dev/null # ;echo "$?") == "0" ]] || printf "Failed"
      [[ $($iptablespath -w -F poofitee_knockerstest 2>/dev/null;echo "$?") == "0" ]] || printf "Failed to flush knockerstest chain rules"
      printf "\n"
-     printf "" > internal_interfaces_referenced # won't include the default gateway
+     printf "" > /tmp/fifos_and_temp_files_for_poofitee_installer/internal_interfaces_referenced # won't include the default gateway
 # test knock rules belonging in the INPUT chain need to be located just prior to any other reference to that private interface or any of the addresses associated with such interface
      echo "$internal_net_interfaces"|$awkpath '{print $1}' \
      |while read interface; do
@@ -840,12 +803,11 @@ if ! [[ -z "$likeliest_internal_net_interface" ]];then
                     src_addr_in_input_chain="${intfc_src_addr_in_input_chain#* }"; src_addr_in_input_chain="${src_addr_in_input_chain%/*}"
             # the next search is to locate references of the internal interface under scrutiny in each line of chain in route table
                     if [[ $(($($ippath route show|$greppath $intfc_in_input_chain|$greppath -c default))) -eq 0 ]];
-                    then echo "$linenum_in_input_chain $intfc_in_input_chain" >> internal_interfaces_referenced
+                    then echo "$linenum_in_input_chain $intfc_in_input_chain" >> /tmp/fifos_and_temp_files_for_poofitee_installer/internal_interfaces_referenced
                     elif ! [[ "$src_addr_in_input_chain" == "0.0.0.0" ]];then # we assume if finding by address, route tables are already set up
 # determine address range[s] routed out that interface and check for input chain references to any of them 
 #   using $ippath route show|$greppath $internal_net_interfaces|$awkpath '{print $1}' -> convert each line 
 #   to binary which gives one or more lines of address ranges to match to ip addresses referenced in INPUT chain to, /32 = no / at all.  Abort operation if private interface is also default
-#  TODO:  convert this code into using $ipsetpath like this:
 # $ipsetpath n poofitee_internal_iface_ranges hash:net comment
 # $ipsetpath test poofitee_internal_iface_ranges "$src_addr_in_input_chain"
 # SEARCH FOR ADDRESSES EVEN IF INTERFACE REFERENCE IS FOUND SO CAN KNOW THE FIRST LINE EITHER ONE OCCURS IN.
@@ -878,13 +840,13 @@ if ! [[ -z "$likeliest_internal_net_interface" ]];then
                          src_addr_in_input_chain=$(( ($src_addr_in_input_chain_seg1 * 256 * 256 * 256) + ($src_addr_in_input_chain_seg2 * 256 * 256) + ($src_addr_in_input_chain_seg3 * 256) + $src_addr_in_input_chain_seg4 ))
                          if [[ "$(printf "$range_end\n$src_addr_in_input_chain"|$sortpath -n|$tailpath -n1)" == "$range_end" ]];then
                               #   echo "within range"
-                              "$linenum_in_input_chain $intfc_in_input_chain" >> internal_interfaces_referenced
+                              "$linenum_in_input_chain $intfc_in_input_chain" >> /tmp/fifos_and_temp_files_for_poofitee_installer/internal_interfaces_referenced
                          fi
                     done
                fi
           done
      done
-     linenumber_for_inserting_before=$(($($sortpath -k1 < internal_interfaces_referenced|$awkpath '{if (NR==1) {print $1}}')))
+     linenumber_for_inserting_before=$(($($sortpath -k1 < /tmp/fifos_and_temp_files_for_poofitee_installer/internal_interfaces_referenced|$awkpath '{if (NR==1) {print $1}}')))
      [[ "$linenumber_for_inserting_before" == "0" ]] && linenumber_for_inserting_before="1"
      if ! [[ -z "$($greppath ^Port /etc/ssh/sshd_config|$awkpath '{print $2}')" ]]; then
           [[ $($iptablespath -w -I INPUT $linenumber_for_inserting_before -i $likeliest_internal_net_interface -m comment --comment "poofitee_knock extract ssh for knock testg frm private side in ssh" -p tcp --dport $($greppath ^Port /etc/ssh/sshd_config|$awkpath '{print $2}') -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT 2>/dev/null;echo "$?") == "0" ]] && linenumber_for_inserting_before=$(( $linenumber_for_inserting_before + 1 )) || printf "Failed 14"
@@ -1416,7 +1378,7 @@ load_rules()
                 echo "Warning: skipping IPv4 (no rules to load)"
         else
            # load rules made with ipset
-           $ipsetpath restore -f /etc/iptables/ipset.sets 1>restor 2>restorerr 2>&1 ||  grep "already exists" < restorerr ||  grep "already exists" < restor
+           $ipsetpath restore -f /etc/iptables/ipset.sets 1>/tmp/fifos_and_temp_files_for_poofitee_installer/restor 2>/tmp/fifos_and_temp_files_for_poofitee_installer/restorerr 2>&1 ||  grep "already exists" < /tmp/fifos_and_temp_files_for_poofitee_installer/restorerr ||  grep "already exists" < /tmp/fifos_and_temp_files_for_poofitee_installer/restor
 		if [ \$? -ne 0 ]; then
 			rc=1
 		fi
@@ -1456,7 +1418,6 @@ else
 # here is where to configure persistence for iptables-persistent only
 fi
 printf "." # insert friendly progress indicators
-# TODO: CURRENTLY UNDERWAY: converting from the following shell script backup ruleset to iptables-type restore. 
 REPLY=""
 printf "." # insert friendly progress indicators
 if ! [[ -z "$likeliest_internal_net_interface" ]] && [[ "$($greppath -c ^net.ipv4.ip_forward=1 </etc/sysctl.conf)" == "0" ]];then
@@ -1490,7 +1451,7 @@ fi
 printf "." # insert friendly progress indicators
 $ipsetpath create poofitee_blacklist hash:ip comment &>/dev/null
 printf "." # insert friendly progress indicators
-$ipsetpath create poofitee_whitelist hash:ip comment&>/dev/null
+$ipsetpath create poofitee_whitelist hash:ip comment &>/dev/null
 printf "." # insert friendly progress indicators
 $ipsetpath create poofitee_static_trusted hash:ip comment &>/dev/null
 printf "." # insert friendly progress indicators
@@ -1516,9 +1477,9 @@ printf "." # insert friendly progress indicators
      $greppath -Eo '((([1-9]|[1-9][0-9]|1[0-9])?[0-9]|2[0-4][0-9]|25[0-5])\.){3}(1?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])((/[0-2]?[0-9])|(/3[0-2]))?'|\
      while read ipadd;do
            if [[ $ipadd =~ / ]];then
-                ipset add poofitee_static_trusted_cidr $ipadd comment "$(date) installer detected as trusted"
+                ipset add poofitee_static_trusted_cidr $ipadd comment "$(date) installer detected as trusted" &>/dev/null
            else
-                ipset add poofitee_static_trusted $ipadd comment "$(date) installer detected as trusted"
+                ipset add poofitee_static_trusted $ipadd comment "$(date) installer detected as trusted" &>/dev/null
            fi
      done
 #	! [ -z "$likeliest_internal_net_interface" ] && ! ($iptablespath -w -nvL INPUT|$greppath -- " ACCEPT     all  --  $likeliest_internal_net_interface"                                  |$greppath "poofitee_fw") >/dev/null && ($iptablespath -w -A INPUT -i $likeliest_internal_net_interface -j ACCEPT -m comment --comment "poofitee_fw"  >/dev/null 2>/dev/null || printf "Failed a")
@@ -1550,9 +1511,9 @@ printf "." # insert friendly progress indicators
 ! ($iptablespath -w -nvL INPUT                         |$greppath -- " DROP       all  --  "                                                                      |$greppath -v " match-set "|$greppath "poofitee_fw") >/dev/null && ($iptablespath -w -A INPUT -i $external_net_interface -m comment --comment "poofitee_fw" -j DROP &>/dev/null || printf "Failed i")
 printf "." # insert friendly progress indicators
 #The below lines are for templates the owner/admin can copy techjnique
-$ipsetpath add poofitee_static_trusted_cidr 91.189.88.0/21 comment "Canonical"   >/dev/null  2>/dev/null
+$ipsetpath add poofitee_static_trusted_cidr 91.189.88.0/21 comment "Canonical" &>/dev/null
 printf "." # insert friendly progress indicators
-$ipsetpath add poofitee_static_trusted 199.102.46.70 comment "local time server hosted by Monticello"   >/dev/null  2>/dev/null
+$ipsetpath add poofitee_static_trusted 199.102.46.70 comment "local time server hosted by Monticello" &>/dev/null
 printf "." # insert friendly progress indicators
 
 ! ($iptablespath -w -nvL OUTPUT                        |$greppath -- " ACCEPT     all  --  "                                                             |$greppath -- " RELATED,ESTABLISHED"|$greppath "poofitee_fw") >/dev/null && ($iptablespath -w -A OUTPUT -m comment --comment "poofitee_fw existing dialogs traffic presumed trusted" -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT &>/dev/null || printf "Failed j")
@@ -1654,7 +1615,7 @@ a bogon test file updated often : http://www.team-cymru.org/Services/Bogons/full
 
 EOF
 
-echo
+#echo
 #  TODO: assist-load current ACCEPT lines list here
 #  TODO:  script a tool to allow owners to specify ports for public services.  Rate Limit those users 3-5/min connect attempts, I guess
 <<SANDBOX
@@ -1740,9 +1701,9 @@ $headpath -n "\${lineshere%::*}" \$0 > \$0.bak
 mv \$0.bak \$0
 chmod 777 \$0
 EOF
-) > cleanup.sh
-chmod 777 cleanup.sh
-./cleanup.sh
+) > /tmp/fifos_and_temp_files_for_poofitee_installer/cleanup.sh
+chmod 777 /tmp/fifos_and_temp_files_for_poofitee_installer/cleanup.sh
+/tmp/fifos_and_temp_files_for_poofitee_installer/cleanup.sh
 # read -s -n 1 -p "press a key before while..."
 while getopts "t:" opt; do
 # read -s -n 1 -p "press a key in while before case..."
@@ -1772,8 +1733,8 @@ echo "\$@" >> "\$0"
 :
 
 EOF1
-) > "timeouttry.sh"
-chmod 700 "timeouttry.sh"
+) > "/tmp/fifos_and_temp_files_for_poofitee_installer/timeouttry.sh"
+chmod 700 "/tmp/fifos_and_temp_files_for_poofitee_installer/timeouttry.sh"
 while true;do  #this loop allows user to change the email account for outbound server & builds connect.txt file
      while true; do #this loop forces an address to be chosen from the bunch, then goes through all connections found for it
           get_1_addr_from_bunch $toemailadds
@@ -1788,7 +1749,7 @@ while true;do  #this loop allows user to change the email account for outbound s
           for MAIL_PROT in smtp mail;do
                for port in 587 25 2587 26 2525 25025 2526 3325 465 995 110 993 143;do
                     printf "\rChecking $MAIL_PROT.$outemailprovider:$port\033[K";
-                    (./timeouttry.sh -t 2 "exec 5>&-;exec 5<>/dev/tcp/$MAIL_PROT.$outemailprovider/$port;read -u 5 HELO;! [[ -z \$HELO ]] && echo \"$MAIL_PROT:$port\" >> \"$poofitee_home_dir/$outemailprovider.outconnects.txt\";printf \"quit\" >&5;read -t 2 -u 5 QUIT;exec 5>&-")
+                    (/tmp/fifos_and_temp_files_for_poofitee_installer/timeouttry.sh -t 2 "exec 5>&-;exec 5<>/dev/tcp/$MAIL_PROT.$outemailprovider/$port;read -u 5 HELO;! [[ -z \$HELO ]] && echo \"$MAIL_PROT:$port\" >> \"$poofitee_home_dir/$outemailprovider.outconnects.txt\";printf \"quit\" >&5;read -t 2 -u 5 QUIT;exec 5>&-")
                done  2> /dev/null
           done
           if [[ -f "$poofitee_home_dir/$outemailprovider.outconnects.txt" ]];then
@@ -1923,7 +1884,7 @@ while true;do
               [[ -f "$poofitee_home_dir/$inemailprovider.inconnects.txt" ]] \
                  && rm "$poofitee_home_dir/$inemailprovider.inconnects.txt" 2>/dev/null
               printf  "\rYou selected address $inemailadd \033[K\n"
-              while ! [[ "$($digpath +short myip.opendns.com @resolver1.opendns.com)" =~ ^((1?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\.){3}(1?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])$ ]];do
+              while ! [[ "$($curlpath ipecho.net/plain)" =~ ^((1?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\.){3}(1?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])$ ]];do
                   printf "\r\033[KNo internet connection found with full DNS.  Press a key when corrected...";read -n1 -s
               done
               while ! [[ -f "$poofitee_home_dir/$inemailprovider.inconnects.txt" ]];do # this loop re-tries if no connection file is created in the loop
@@ -1932,7 +1893,7 @@ while true;do
                        for port in 465 995 110 993;do
                             printf "\rChecking $MAIL_PROT.$inemailprovider:$port\033[K"
 #The following script file does not exist
-                            (./timeouttry.sh -t 2 "exec 5>&-;exec 5<>/dev/tcp/$MAIL_PROT.$inemailprovider/$port;read -u 5 HELO;! [[ -z \$HELO ]] && printf \"$MAIL_PROT:$port\" >> \"$poofitee_home_dir/$inemailprovider.inconnects.txt\";printf \"quit\" >&5;read -t 2 -u 5 QUIT;exec 5>&-")
+                            (/tmp/fifos_and_temp_files_for_poofitee_installer/timeouttry.sh -t 2 "exec 5>&-;exec 5<>/dev/tcp/$MAIL_PROT.$inemailprovider/$port;read -u 5 HELO;! [[ -z \$HELO ]] && printf \"$MAIL_PROT:$port\" >> \"$poofitee_home_dir/$inemailprovider.inconnects.txt\";printf \"quit\" >&5;read -t 2 -u 5 QUIT;exec 5>&-")
                        done  2> /dev/null
                   done
                   if [[ -f "$poofitee_home_dir/$inemailprovider.inconnects.txt" ]];then
@@ -1953,14 +1914,14 @@ while true;do
               [[ -z "$rcpw$rcpw1" ]] && break 2
               ! [[ "$rcpw" == "$rcpw1" ]] && continue
               rm fifo 2>/dev/null
-# mkfifo fifo doesn't function ideally
+# mkfifo /tmp/fifos_and_temp_files_for_poofitee_installer/fifo doesn't function ideally
               while read -u 3 -r line;do #? this while loop iterates once for each port that accepted a pop connection ${line%:*}"."$outemailprovider"]:"${line#*:}
                   while true;do # This loop for exact settings retry
                       exec 5>&-
                       exec 5<>/dev/tcp/"${line%:*}.$inemailprovider/${line#*:}"
                       printf "\rExecuted the connect of ${line%:*}.$inemailprovider/${line#*:}, now communicating with it for user $inemailacct...\033[K"
                       read -t 2 -u 5 HELO 
-                      printf "$HELO" >> fifo 
+                      printf "$HELO" >> /tmp/fifos_and_temp_files_for_poofitee_installer/fifo 
 # printf "\n$HELO"
                       msgnumber=0
                       for msg in "user $inemailacct\r" "pass $rcpw\r" stat list;do
@@ -1971,7 +1932,7 @@ while true;do
 # using 'cat <&5' would probably timeout on most single-line reads
                            while (read -u 5 replyline
                                   printf "\r\033[K$replyline\n"
-                                  echo "$replyline" >> fifo 
+                                  echo "$replyline" >> /tmp/fifos_and_temp_files_for_poofitee_installer/fifo 
                                   ! [[ "${replyline:0:1}" == "+" ]] && break # ! [[ "${replyline:0:1}" == "+" ]] && break
                                  ) &
                                 pid="$!"
@@ -1991,13 +1952,13 @@ while true;do
                       done
                       printf "quit\r" >&5 
                       read -t 2 -u 5 BYE
-#                      printf "$BYE" >> fifo 
+#                      printf "$BYE" >> /tmp/fifos_and_temp_files_for_poofitee_installer/fifo 
                       exec 5>&-
-                      if ! [[ "$( replystart="$($tailpath -n 1 fifo)";echo "${replystart::1}")" == "+" ]];then # present this choice with every error
-                         printf "Unsuccessful sign-in of $inemailacct to ${line%:*}.$inemailprovider/${line#*:}" # with this error:\n$($tailpath -n 1 fifo)"
+                      if ! [[ "$( replystart="$($tailpath -n 1 /tmp/fifos_and_temp_files_for_poofitee_installer/fifo)";echo "${replystart::1}")" == "+" ]];then # present this choice with every error
+                         printf "Unsuccessful sign-in of $inemailacct to ${line%:*}.$inemailprovider/${line#*:}" # with this error:\n$($tailpath -n 1 /tmp/fifos_and_temp_files_for_poofitee_installer/fifo)"
                          printf "quit\r" >&5
                          read -t 2 -u 5 BYE
-#                          printf "$BYE" >> fifo 
+#                          printf "$BYE" >> /tmp/fifos_and_temp_files_for_poofitee_installer/fifo 
                          exec 5>&-
                          printf "If you're sure about the password, and there are more port options for this\
 \nemail account, option 'N' would make the most sense.  Try a new email Address, a\
@@ -2026,8 +1987,8 @@ until ! [[ -z $toemailadds ]];do
      get_sendto_emailadds
 done
 #     printf "\n\nLet's look at the results:\n"
-#     cat fifo
-#     rm fifo 2>/dev/null
+#     cat /tmp/fifos_and_temp_files_for_poofitee_installer/fifo
+#     rm /tmp/fifos_and_temp_files_for_poofitee_installer/fifo 2>/dev/null
            (cat <<EOF
 #!/bin/bash
 
@@ -2322,14 +2283,15 @@ fi
 printf "The notification email you'd receive should refer to this computer by what name?"
 pcname=$(while read -e -r -i "$(hostname)" sysname;do if ! [[ -z "$sysname" ]];then echo "$sysname";break;fi;done)
 echo
-if [[ "$($digpath +short myip.opendns.com @resolver1.opendns.com)" =~ ^((1?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\.){3}(1?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])$ ]];then 
+if [[ "$($curlpath ipecho.net/plain)" =~ ^((1?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\.){3}(1?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])$ ]];then 
      printf "To learn any new IP address gotten, this computer will interrogate a public\nservice, \
 default is shown below.  Press enter to keep it; otherwise, change it\nto suit you:"
 else 
      printf "To learn any new IP address gotten, this computer will interrogate a public\nservice, \
 default is shown below, but is NOT WORKING now.  Change it to suit you:"
 fi
-resolver="$(while read -e -i "$digpath +short myip.opendns.com @resolver1.opendns.com" resolver;do 
+#The following line is not yet tested after changing from dig to curl
+resolver="$(while read -e -i "$curlpath ipecho.net/plain" resolver;do 
      echo "$resolver";break;
 done)"
 
@@ -2440,7 +2402,8 @@ IFS=. read -r -a ip_from_internal_interface <<< "$($ifconfigpath|$greppath -A4 ^
 webpageprotocol=https
 emailsubjectline="New IP address for \$(hostname): "
 file_to_store_ip="$poofitee_home_dir/oldip"
-resolver="$digpath +short myip.opendns.com @resolver1.opendns.com"
+#The following line is not yet tested after changing from dig to curl
+resolver="$curlpath ipecho.net/plain"
 ip_from_resolver="\$(\$resolver)"
 if [[ \$ip_from_resolver =~ ^((1?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\.){3}(1?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])$ ]];
 then
@@ -2621,6 +2584,623 @@ get_1_addr_from_bunch() {
           ! [[ -z "$emailadd" ]] && ! [[ -z "$emailpw" ]] && break
           done
 }
+press_a_key () {
+printf "press $(! [[ -z "$1$2" ]] && printf "$1/$2" || printf "any key"), Ctrl-c aborts..."
+read -rsn 1;read -rst 0.001 -n4 discard
+[[ "$REPLY" == "$1" ]] && return 0 || return 1
+}
+
+#logo outer badge shape (eyebrows, face) fills left side of screen, then each line gets repeated backwards just to right side of screen
+logo="\
+......................................................................................................@...\
+\n......................................................................................................@...\
+\n......................................................................................................@...\
+\n....................@@@@..............................................................................@...\
+\n.................@@@@..@@@@@@@@@@@@@@................................................................@@...\
+\n.............@@@@@..................@@@@@@@@@@@@@@...................................................@....\
+\n.............@@..................................@@@@@@@.............................................@....\
+\n..............@........................................@@@@@........................................@@....\
+\n..............@@...........................................@@@@@....................................@@....\
+\n...............@...............................................@@@@.................................@.....\
+\n...............@..................................................@@@@@............................@@.....\
+\n..............@@...........................yyy........................@@@@@........................@@.....\
+\n.............@@.....................**.**TT...TT**........................@@@@@...................@@......\
+\n.............@..................*.*................**.*.......................@@@@@@.............@@.......\
+\n............@@................*...*.................*....*.........................@@@@....@@@@@@.........\
+\n...........@@..............*......].................*......*..........................@@@@@@..............\
+\n.........@@........................*.............../........*.............................................\
+\n.......@@@..........................\..............*.........*............................................\
+\n..@@@@@.......................................*.*.............*...........................................\
+\n@@@.......................................................................................................\
+\n@.........................................................................................................\
+\n@.........................................................................................................\
+\n@.........................................................................................................\
+\n@.........................................................................................................\
+\n@.........................................................................................................\
+\n@@........................................................................................................\
+\n.@........................................................................................................\
+\n.@@.......................................................................................................\
+\n..@.......................................................................................................\
+\n..@.......................................................................................................\
+\n..@@......................................................................................................\
+\n...@......................................................................................................\
+\n...@@.....................................................................................................\
+\n...@@.....................................................................................................\
+\n....@.....................................................................................................\
+\n.....@....................................................................................................\
+\n.....@....................................................................................................\
+\n.....@@...................................................................................................\
+\n......@@..................................................................................................\
+\n.......@..................................................................................................\
+\n........@................................................................................................."
+layitout () {
+            printf -- "$1\n"| \
+            while IFS= read -r line;do
+                if [[ -z "$screen_line" ]]; then
+                    screen_line="."
+                else
+# here, insert all lines needing accurate screen locations
+                    printf "\n"
+                fi
+                if [[ "${line:0:8}" == "<center>" ]];then
+                    line="${line:8}"
+                    ! [[ -z "$line" ]] && line="$([[ $(((cols - ${#line}) / 2 )) -ge 1 ]] && printf -- '%.s'" " $(seq $(((cols - ${#line}) / 2 ))))""$line"
+                fi
+                firstofline=""
+                for ((linepointer=0;linepointer<${#line};));do
+                    printout=""
+                    for ((i=cols;i>=0;i--));do
+                        if [[ $((linepointer+i)) -ge ${#line} ]];then
+                            printout="${line:linepointer}"
+                            linepointer=${#line}
+                            i=0
+                        elif [[ ${line:i+linepointer:1} =~ [[:space:]] ]];then
+                            printout="${line:linepointer:i}"
+                            ((i++))
+                            linepointer=$((linepointer+=i))
+                            i=0
+                        elif [[ $((i)) -lt $((cols)) ]] && [[ ${line:i+linepointer:1} =~ - ]] && [[ ${line:i+linepointer-1:1} =~ [[:alnum:]] ]];then
+                            ((i++))
+                            printout="${line:linepointer:i}"
+                            linepointer=$((linepointer+=i))
+                            i=0
+                        fi
+                    done
+                    if [[ -z "$firstofline" ]]; then
+                        firstofline="."
+                    else
+                        printout="\n""$printout"
+                    fi
+                    printf -- "$printout"
+        	    done
+            done
+return
+}
+showthis () {
+# $1 is main text to display
+# $2 is type of box to use
+# $3 is title of inmost box
+# $4 is background title
+# $5 and following is list of checklist or menu entries
+# integrate with press_a_key?
+rows=24
+cols=80
+#NOTE: BECAUSE OF THE NEED FOR tput IN THIS FUNCTION, WE MUST NOT REDIRECT STDERR OF THE CALLING STATEMENT TO THIS FUNCTION
+# THEREFORE THE WHIPLOG ANSWER WILL BE CONTROLLED WITHIN HERE, THE FILE NAME IS THEN HARDCODED BOTH HERE AND IN THE CALLER
+if ! [[ -z "$tputpath" ]];then
+    rows="$($tputpath lines)"
+    cols="$(($($tputpath cols)))"
+fi
+maxwidthforwhiplogbox=$((cols - 8))
+title="$(! [[ -z "$dialogpath" ]] && printf "\\Zb\\Z1")$3"
+# THIS PART OF THIS FUNCTION NOW EXPANDS BACKTITLE ($4 COMING IN HERE) IF TPUT IS PRESENT USING THE LAST TWO-SPACE SEQUENCE IN BACKTITLE IN WHICH TO INSERT ADDITIONAL PADDING
+backtitle="$4"
+if ! [[ -z "$4" ]] && [[ ${#4} -lt $((cols - 2)) ]];then
+    backtitle="${4%'  '*}$(printf '%.s'" " $(seq $((cols $([[ -z "$dialogpath" ]] && printf -- "+ 2") - ${#4}))))${4##*'  '}"
+fi
+screen_line=""
+# boxheightestimate="$5"
+argnum=6
+if ! [[ -z "$whiplogpath" ]];then
+numoflinesinoutput="0"
+colors=$([[ -z "$whiptailpath" ]] && printf -- "--colors")
+#   NOTE THAT OUR DEVELOPMENT PLATFORM DID NOT GIVE THE '--SCROLLTEXT' OPTION FUNCTIONALITY.  ALSO NOTE THAT FreeBSD DIALOG(1) MAN PAGES STATE --SCROLLTEXT IS MAPPED TO --SCROLLBAR
+    case $2 in 
+    infobox)
+        printf -- "$1\n"| \
+        while IFS= read -r line;do
+            if [[ -z "$screen_line" ]]; then
+                screen_line="."
+            else
+                numoflinesinoutput="$(($numoflinesinoutput + 1))"
+            fi
+            if [[ "${line:0:8}" == "<center>" ]];then
+                line="${line:8}"  #The adjustment for centering on display must occur in the dialog command line
+            fi
+            firstofline=""
+            for ((linepointer=0;linepointer<${#line};));do
+                for ((i=cols-12;i>=0;i--));do #The 12 is line waste in dialog infobox
+                    if [[ $((linepointer+i)) -ge ${#line} ]];then
+                        linepointer=${#line}
+                        i=0
+                    elif [[ ${line:i+linepointer:1} =~ [[:space:]] ]];then
+                        ((i++))
+                        linepointer=$((linepointer+=i))
+                        i=0
+                    fi
+                done
+                if [[ -z "$firstofline" ]]; then
+                    firstofline="."
+                else
+                    numoflinesinoutput="$(($numoflinesinoutput + 1))"
+                fi
+            done
+            printf "$numoflinesinoutput" > /tmp/fifos_and_temp_files_for_poofitee_installer/numoflinesinoutput
+        done
+        numoflinesinoutput="$(cat /tmp/fifos_and_temp_files_for_poofitee_installer/numoflinesinoutput)"
+        rm /tmp/fifos_and_temp_files_for_poofitee_installer/numoflinesinoutput
+# Haven't been able to get infobox to display in whiptail with xterminals so we change to msgbox
+        [[ $((rows - numoflinesinoutput)) -gt 11 ]] && rowsfordialog=$(($numoflinesinoutput + 3)) || rowsfordialog=$(($rows - 8)) 
+        $whiplogpath $colors --title "$title" --backtitle "$backtitle" \
+            --nocancel \
+            --scrolltext $([[ -z "$whiptailpath" ]] && printf -- "--infobox" || printf -- "--msgbox") "$(screen_line=""; \
+            printf -- "$1\n"|while IFS= read -r line;do \
+                if [[ -z "$screen_line" ]]; then \
+                    screen_line="."; \
+                else \
+                    printf "\n"; \
+                fi; \
+                if [[ "${line:0:8}" == "<center>" ]];then
+                    line="${line:8}"
+                    [[ $((((cols - ${#line}) / 2) - 6)) -gt 0 ]] && line="$(printf '%.s'" " $(seq $((((cols - ${#line}) / 2) - 6))))""$line"; \
+                fi; \
+                printf "$line"; \
+            done; \
+        )" $(($rowsfordialog $(! [[ -z "$whiptailpath" ]] && printf -- "+ 4 "))) $maxwidthforwhiplogbox 2>/tmp/fifos_and_temp_files_for_poofitee_installer/answergui
+    ;;
+    yesno)
+        printf -- "$1\n"| \
+        while IFS= read -r line;do
+            if [[ -z "$screen_line" ]]; then
+                screen_line="."
+            else
+                numoflinesinoutput="$(($numoflinesinoutput + 1))"
+            fi
+            if [[ "${line:0:8}" == "<center>" ]];then
+                line="${line:8}"  #The adjustment for centering on display must occur in the dialog command line
+            fi
+            firstofline=""
+            for ((linepointer=0;linepointer<${#line};));do
+                for ((i=cols-12;i>=0;i--));do #The 12 is line waste in dialog infobox
+                    if [[ $((linepointer+i)) -ge ${#line} ]];then
+                        linepointer=${#line}
+                        i=0
+                    elif [[ ${line:i+linepointer:1} =~ [[:space:]] ]];then
+                        ((i++))
+                        linepointer=$((linepointer+=i))
+                        i=0
+                    fi
+                done
+                if [[ -z "$firstofline" ]]; then
+                    firstofline="."
+                else
+                    numoflinesinoutput="$(($numoflinesinoutput + 1))"
+                fi
+            done
+            printf "$numoflinesinoutput" > /tmp/fifos_and_temp_files_for_poofitee_installer/numoflinesinoutput
+        done
+        numoflinesinoutput="$(cat /tmp/fifos_and_temp_files_for_poofitee_installer/numoflinesinoutput)"
+        rm /tmp/fifos_and_temp_files_for_poofitee_installer/numoflinesinoutput
+# Haven't been able to get infobox to display in whiptail with xterminals so we change to msgbox
+        [[ $((rows - numoflinesinoutput)) -gt 11 ]] && rowsfordialog=$(($numoflinesinoutput + 3)) || rowsfordialog=$(($rows - 8)) 
+        $whiplogpath $colors --title "$title" --backtitle "$backtitle" \
+            --nocancel \
+            --scrolltext $([[ -z "$whiptailpath" ]] && printf -- "--infobox" || printf -- "--msgbox") "$(screen_line=""; \
+            printf -- "$1\n"|while IFS= read -r line;do \
+                if [[ -z "$screen_line" ]]; then \
+                    screen_line="."; \
+                else \
+                    printf "\n"; \
+                fi; \
+                if [[ "${line:0:8}" == "<center>" ]];then
+                    line="${line:8}"
+                    [[ $((((cols - ${#line}) / 2) - 6)) -gt 0 ]] && line="$(printf '%.s'" " $(seq $((((cols - ${#line}) / 2) - 6))))""$line"; \
+                fi; \
+                printf "$line"; \
+            done; \
+        )" $(($rowsfordialog $(! [[ -z "$whiptailpath" ]] && printf -- "+ 4 "))) $maxwidthforwhiplogbox "${@:5}" 2>/tmp/fifos_and_temp_files_for_poofitee_installer/answergui
+    ;;
+    msgbox)
+        printf -- "$1\n"| \
+        while IFS= read -r line;do
+            if [[ -z "$screen_line" ]]; then
+                screen_line="."
+            else
+                numoflinesinoutput="$(($numoflinesinoutput + 1))"
+#printf "\n" >> /tmp/fifos_and_temp_files_for_poofitee_installer/sandbox
+            fi
+            if [[ "${line:0:8}" == "<center>" ]];then
+                line="${line:8}"  #The adjustment for centering on display must occur in the dialog command line
+            fi
+            firstofline=""
+            for ((linepointer=0;linepointer<${#line};));do
+#printout=""
+                for ((i=cols-12;i>=0;i--));do #The 12 is line waste in dialog infobox
+                    if [[ $((linepointer+i)) -ge ${#line} ]];then
+#printout="${line:linepointer}"
+                        linepointer=${#line}
+                        i=0
+                    elif [[ ${line:i+linepointer:1} =~ [[:space:]] ]];then
+#printout="${line:linepointer:i}"
+                        ((i++))
+                        linepointer=$((linepointer+=i))
+                        i=0
+                    fi
+                done
+                if [[ -z "$firstofline" ]]; then
+                    firstofline="."
+                else
+#printout="\n""$printout"
+                    numoflinesinoutput="$(($numoflinesinoutput + 1))"
+                fi
+#printf -- "$printout" >> /tmp/fifos_and_temp_files_for_poofitee_installer/sandbox
+            done
+            printf "$numoflinesinoutput" > /tmp/fifos_and_temp_files_for_poofitee_installer/numoflinesinoutput
+        done
+        numoflinesinoutput="$(($(cat /tmp/fifos_and_temp_files_for_poofitee_installer/numoflinesinoutput) + 2))"
+        ! [[ -z "$whiptailpath" ]] && numoflinesinoutput="$(($numoflinesinoutput + 2))"
+        rm /tmp/fifos_and_temp_files_for_poofitee_installer/numoflinesinoutput
+        [[ $((rows - numoflinesinoutput)) -gt 11 ]] && rowsfordialog=$(($numoflinesinoutput + 3)) || rowsfordialog=$(($rows - 8)) 
+        $whiplogpath $colors --title "$title" --backtitle "$backtitle" \
+            --nocancel \
+            --scrolltext "--$2" "$(screen_line=""; \
+            printf -- "$1\n"|while IFS= read -r line;do \
+                if [[ -z "$screen_line" ]]; then \
+                    screen_line="."; \
+                else \
+                    printf "\n"; \
+                fi; \
+                if [[ "${line:0:8}" == "<center>" ]];then
+                    line="${line:8}"
+                    [[ $((((cols - ${#line}) / 2) - 6)) -gt 0 ]] && line="$(printf '%.s'" " $(seq $((((cols - ${#line}) / 2) - 6))))""$line"; \
+                fi; \
+                printf "$line"; \
+            done; \
+        )" $rowsfordialog $maxwidthforwhiplogbox 2>/tmp/fifos_and_temp_files_for_poofitee_installer/answergui
+    ;;
+    checklist|checkbox)
+        printf -- "$1\n"| \
+        while IFS= read -r line;do
+            if [[ -z "$screen_line" ]]; then
+                screen_line="."
+            else
+                numoflinesinoutput="$(($numoflinesinoutput + 1))"
+#printf "\n" >> /tmp/fifos_and_temp_files_for_poofitee_installer/sandbox
+            fi
+            if [[ "${line:0:8}" == "<center>" ]];then
+                line="${line:8}"  #The adjustment for centering on display must occur in the dialog command line
+            fi
+            firstofline=""
+            for ((linepointer=0;linepointer<${#line};));do
+#printout=""
+                for ((i=cols-12;i>=0;i--));do #The 12 is line waste in dialog infobox
+                    if [[ $((linepointer+i)) -ge ${#line} ]];then
+#printout="${line:linepointer}"
+                        linepointer=${#line}
+                        i=0
+                    elif [[ ${line:i+linepointer:1} =~ [[:space:]] ]];then
+#printout="${line:linepointer:i}"
+                        ((i++))
+                        linepointer=$((linepointer+=i))
+                        i=0
+                    fi
+                done
+                if [[ -z "$firstofline" ]]; then
+                    firstofline="."
+                else
+#printout="\n""$printout"
+                    numoflinesinoutput="$(($numoflinesinoutput + 1))"
+                fi
+#printf -- "$printout" >> /tmp/fifos_and_temp_files_for_poofitee_installer/sandbox
+            done
+            printf "$numoflinesinoutput" > /tmp/fifos_and_temp_files_for_poofitee_installer/numoflinesinoutput
+        done
+        numoflinesinoutput="$(($(cat /tmp/fifos_and_temp_files_for_poofitee_installer/numoflinesinoutput) + 2))"
+        ! [[ -z "$whiptailpath" ]] && numoflinesinoutput="$(($numoflinesinoutput + 2))"
+        rm /tmp/fifos_and_temp_files_for_poofitee_installer/numoflinesinoutput
+#        [[ $((rows - numoflinesinoutput)) -gt 11 ]] && rowsfordialog=$(($numoflinesinoutput + 3)) || rowsfordialog=$(($rows - 8))
+        [[ $((rows - numoflinesinoutput)) -gt 11 ]] && rowsfordialog=$(($numoflinesinoutput + $(($5 + $([[ -z "$dialogpath" ]] && printf "2" || printf "4"))))) || rowsfordialog=$(($rows - 8)) 
+        $whiplogpath $colors --title "$title" --backtitle "$backtitle" \
+                --scrolltext \
+                --separate-output \
+                $([[ -z "$dialogpath" ]] && printf -- "--separate-output") \
+                --noitem \
+                --nocancel \
+                --checklist -- "$(screen_line=""; \
+                printf -- "$1\n"|while IFS= read -r line;do \
+                    if [[ -z "$screen_line" ]]; then \
+                        screen_line="."; \
+                    else \
+                        printf "\n"; \
+                    fi; \
+                    if [[ "${line:0:8}" == "<center>" ]];then
+                        line="${line:8}"
+                    fi; \
+                    printf "$line"; \
+                done; \
+            )" $rowsfordialog $maxwidthforwhiplogbox "${@:5}" 2>/tmp/fifos_and_temp_files_for_poofitee_installer/answergui
+        printf "\n" >> /tmp/fifos_and_temp_files_for_poofitee_installer/answergui
+        while IFS= read -r line;do
+            index=0
+            for argument in "${@:argnum}";do 
+                if [[ $index =~ [02468]$ ]];then
+                    [[ "$line" == "$argument" ]] && answer+="$((index / 2))\n"
+                fi
+                index=$((index + 1))
+            done
+        done < /tmp/fifos_and_temp_files_for_poofitee_installer/answergui
+#        printf -- "$answer" > /tmp/fifos_and_temp_files_for_poofitee_installer/answergui
+    ;;
+    radiobox|radiolist)
+        printf -- "$1\n"| \
+        while IFS= read -r line;do
+            if [[ -z "$screen_line" ]]; then
+                screen_line="."
+            else
+                numoflinesinoutput="$(($numoflinesinoutput + 1))"
+printf "\n" >> /tmp/fifos_and_temp_files_for_poofitee_installer/sandbox
+            fi
+            if [[ "${line:0:8}" == "<center>" ]];then
+                line="${line:8}"  #The adjustment for centering on display must occur in the dialog command line
+            fi
+            firstofline=""
+            for ((linepointer=0;linepointer<${#line};));do
+printout=""
+                for ((i=cols-12;i>=0;i--));do #The 12 is line waste in dialog infobox
+                    if [[ $((linepointer+i)) -ge ${#line} ]];then
+printout="${line:linepointer}"
+                        linepointer=${#line}
+                        i=0
+                    elif [[ ${line:i+linepointer:1} =~ [[:space:]] ]];then
+printout="${line:linepointer:i}"
+                        ((i++))
+                        linepointer=$((linepointer+=i))
+                        i=0
+                    fi
+                done
+                if [[ -z "$firstofline" ]]; then
+                    firstofline="."
+                else
+printout="\n""$printout"
+                    numoflinesinoutput="$(($numoflinesinoutput + 1))"
+                fi
+printf -- "$printout" >> /tmp/fifos_and_temp_files_for_poofitee_installer/sandbox
+            done
+            printf "$numoflinesinoutput" > /tmp/fifos_and_temp_files_for_poofitee_installer/numoflinesinoutput
+        done
+        numoflinesinoutput="$(($(cat /tmp/fifos_and_temp_files_for_poofitee_installer/numoflinesinoutput) + 2))"
+        ! [[ -z "$whiptailpath" ]] && numoflinesinoutput="$(($numoflinesinoutput + 2))"
+        rm /tmp/fifos_and_temp_files_for_poofitee_installer/numoflinesinoutput
+        [[ $((rows - numoflinesinoutput)) -gt 11 ]] && rowsfordialog=$(($numoflinesinoutput + $(($5 + $([[ -z "$dialogpath" ]] && printf "2" || printf "4"))))) || rowsfordialog=$(($rows - 8)) 
+        $whiplogpath $colors --title "$title" --backtitle "$backtitle" \
+                --scrolltext \
+                $([[ -z "$dialogpath" ]] && printf -- "--separate-output") \
+                --noitem \
+                --nocancel \
+                --radiolist -- "$(screen_line=""; \
+                printf -- "$1\n"|while IFS= read -r line;do \
+                    if [[ -z "$screen_line" ]]; then \
+                        screen_line="."; \
+                    else \
+                        printf "\n"; \
+                    fi; \
+                    if [[ "${line:0:8}" == "<center>" ]];then
+                        line="${line:8}"
+                    fi; \
+                    printf "$line"; \
+                done; \
+            )"  "$rowsfordialog" $maxwidthforwhiplogbox "${@:5}" 2>/tmp/fifos_and_temp_files_for_poofitee_installer/answergui
+        printf "\n" >> /tmp/fifos_and_temp_files_for_poofitee_installer/answergui
+        while IFS= read -r line;do
+            index=0
+            for argument in "${@:argnum}";do 
+                if [[ $index =~ [02468]$ ]];then
+                    [[ "$line" == "$argument" ]] && answer+="$((index / 2))\n"
+                fi
+                index=$((index + 1))
+            done
+        done < /tmp/fifos_and_temp_files_for_poofitee_installer/answergui
+#        printf -- "$answer" > /tmp/fifos_and_temp_files_for_poofitee_installer/answergui
+    ;;
+    esac
+else
+#    until
+        activeitem=1
+        clear
+        layitout "$backtitle\n"
+        layitout "$([[ $(((cols - ${#title}) / 2 )) -ge 1 ]] && printf -- '%.s'" " $(seq $(((cols - ${#title}) / 2 ))))""$title\n"
+        if [[ "$2" =~ ^radio|^check|^menu ]];then #hijack the loop for the entries, saving the line numbers of entry locations
+            index="$argnum"
+            minpadding=$((cols / 2 ))
+            for argument in "${@:argnum}";do # should also create an array b/c we will be using it for fast lookup, storing select status, etc. things
+                [[ $index =~ [02468]$ ]] && [[ $(((cols - ${#argument} - 4) / 2 )) -lt $(($minpadding)) ]] && minpadding=$(((cols - ${#argument} - 4) / 2 ))
+                if ! [[ $((minpadding)) -gt 0 ]];then
+                    minpadding=0;break
+                fi
+                index=$((index + 1))
+            done
+            index="$argnum"
+            maxindex=-1
+            for argument in "${@:argnum}";do
+                layitout "\n"
+                if [[ $index =~ [02468]$ ]];then
+                    maxindex=$((maxindex + 1))
+                    printf "\033[6n" ; read -sd R cp;cp="${cp#*[}"
+                    selectionrow[$(((index - argnum) / 2))]="$((${cp%;*} - 1))"
+                    selectioncol[$(((index - argnum) / 2))]="$((minpadding + ${cp#*;}))"
+                    [[ $((minpadding)) -gt 0 ]] && layitout "$(printf '%.s'" " $(seq $((minpadding))))"
+                    layitout "$(printf -- "$([[ $2 =~ ^radio ]] && printf "( ) " || printf "[ ] ")$argument")"
+                    layitout "\n"
+                else
+                    selection_select_status[$(((index - 1 - argnum) / 2))]="$argument"
+                fi
+                index=$((index + 1))
+            done
+        else
+            layitout "$1";return
+        fi
+        layitout "$1"
+        printf "\033[6n" ; read -sd R cp;cp="${cp#*[}"
+        quitrow="$((${cp%;*} - 2))"
+        highlightedentryid=0
+#Select the ones that were ON, place in some lookup or hash storage, and on exit in /tmp/fifos_and_temp_files_for_poofitee_installer/answergui, one per line
+#position the cursor at highlightedentryid
+#for item in "${selection[@]}";do
+#    printf -- "$item\n"
+#done
+#for item in "${selection_select_status[@]}";do
+#    printf -- "$item\n"
+#done
+#exit
+# leave cursor at entry indicated by highlightedentryid
+#set -x
+! [[ -z  "$tputpath" ]] && $tputpath cup ${selectionrow[highlightedentryid]} ${selectioncol[highlightedentryid]}
+#        ! [[ "$2" =~ ^radio|^check|^menu ]] && (read -rsn 1;read -rst 0.001 -n4 discard)
+#set -x
+key=""
+        while [[ "$2" =~ ^radio|^check|^menu ]];do 
+            while IFS= read -rsn1 char;do
+                key+="$(printf "%d" "'$char")," # '
+                for ((i=1;i<5;i++));do
+                    read -rst 0.001 -n1 char
+                    key+="$(printf "%d" "'$char")," # '
+                done
+                case "$key" in
+                    "32,0,0,0,0,") #Space bar, reverse selected status of highighted entry and go to that line and rewrite the selected field, then put at waiting place again
+                        if ! [[ -z "$tputpath" ]] && [[ ${selection_select_status[highlightedentryid]} == "ON" ]];then
+                            selection_select_status[highlightedentryid]="OFF"
+                            mark_char=" "
+                        elif ! [[ -z "$tputpath" ]];then
+                            selection_select_status[highlightedentryid]="ON"
+                            mark_char="*"
+                        fi
+                        printf -- "$mark_char"
+                        $tputpath cup ${selectionrow[highlightedentryid]} ${selectioncol[highlightedentryid]}
+                    ;;
+                   "0,0,0,0,0,")# Enter key, put final selections outside this while loop into an existing variable that invoker can read
+                        index="-1";echo "" > /tmp/fifos_and_temp_files_for_poofitee_installer/answergui
+                        for item in "${selection_select_status[@]}";do
+                           index="$((index + 1))"
+                           if [[ ${selection_select_status[index]} == "ON" ]];then
+                               echo "$index" >> /tmp/fifos_and_temp_files_for_poofitee_installer/answergui
+                            fi
+                        done
+                        break 2
+                    ;;
+                   "27,91,65,0,0,"|"27,91,66,0,0,")
+                         if [[ "$key" == "27,91,65,0,0," ]] || [[ "$key" == "27,91,66,0,0," ]];then # trap up and down arrows
+                              if [[ "$key" == "27,91,65,0,0," ]] && [[ $(($highlightedentryid)) -gt 0 ]];then # up arrow
+                                   highlightedentryid=$(( $highlightedentryid - 1 ))
+                                  ! [[ -z  "$tputpath" ]] && $tputpath cup ${selectionrow[highlightedentryid]} ${selectioncol[highlightedentryid]}
+                              elif [[ "$key" == "27,91,66,0,0," ]] && [[ $(($highlightedentryid)) -lt $((maxindex)) ]];then
+                                   highlightedentryid=$(( $highlightedentryid + 1 )) # down arrow
+                                  ! [[ -z  "$tputpath" ]] && $tputpath cup ${selectionrow[highlightedentryid]} ${selectioncol[highlightedentryid]}
+                              fi
+#                              if [[ "$key" == "27,91,66,0,0," ]] && [[ $(($highlightedentryid)) -lt 1 ]];then # 
+#                                    highlightedentryid=$(( $highlightedentryid + 1 ))
+#                                    continue
+#                              fi
+#                              scratchpad="$printout"
+#                              for i in `seq 2 $(( $highlightedentryid ))`;do
+#                                   ! [[ -z "${scratchpad#*'\n'}" ]] \
+#                                       && scratchpad="${scratchpad#*'\n'}" \
+#                                       || highlightedentryid=$(( $highlightedentryid - 1 ))
+#                              done
+#                              scratchpad="${scratchpad%%'\n'*}"
+#                              printf "\r${scratchpad}\033[K"
+#                              horizptr="$(( ${#scratchpad} ))"
+#                         elif [[ "$char1$char2$char3" == "[C" ]];then
+#                              if [[ $(( ${horizptr} )) -lt $(( ${#scratchpad} )) ]];then
+#                                    horizptr="$(( ${horizptr} + 1 ))"
+#                                    printf "\033[1C"
+#                              fi
+#                         elif [[ "$char1$char2$char3" == "[D" ]];then
+#                              if [[ $(( ${horizptr} )) -gt 0 ]];then
+#                                    horizptr="$(( ${horizptr} - 1 ))"
+#                                    printf "\033[1D"
+#                              fi
+#                         elif [[ "$char1$char2$char3" == "OF" ]];then
+#                              horizptr="$(( ${#scratchpad} ))"
+#                              printf "\r\033[${#scratchpad}C"
+#                         elif [[ "$char1$char2$char3" == "OH" ]];then
+#                              horizptr="0"
+#                              printf "\r"
+#                         elif [[ "$char1$char2$char3" == "[3~" ]];then
+#                              if [[ $(( ${horizptr} )) -lt $(( ${#scratchpad} )) ]];then
+#                                   scratchpad="${scratchpad:0:horizptr}${scratchpad:horizptr+1}" # handles the delete character
+#                                   printf "${scratchpad:horizptr}\033[K\r${scratchpad:0:horizptr}"
+#                              fi
+                         else
+print "Did not find match in if statement\n";exit
+                         fi
+                ;;
+                 *)
+printf "\n$key\n"
+printf "Did not find match in case construct\n";exit
+;;
+                esac
+            key=""
+#exit
+            done
+#            [[ -z "$tputpath" ]] && clear
+        done
+fi
+<<EOF
+                   elif [[ "$(printf "%d" "'$char")" == "127" ]];then # '
+                     if ! [[ $(( ${horizptr} )) -eq 0 ]];then # exit
+                         horizptr="$(( ${horizptr} - 1 ))"
+                         scratchpad="${scratchpad:0:horizptr}${scratchpad:horizptr+1}" # handles the backspace character
+                         printf "\033[1D${scratchpad:horizptr}\033[K\r${scratchpad:0:horizptr}"
+                     fi
+                   elif [[ -z "$char" ]];then
+                         break
+                   else
+                        horizptr="$(( ${horizptr} + 1 ))"
+                        scratchpad="${scratchpad:0:horizptr-1}$char${scratchpad:horizptr-1}"
+                        printf "$char${scratchpad:horizptr}\033[K\r${scratchpad:0:horizptr}"
+                   fi
+#printf "\nGot to where ready to examine keys in\n"
+#printf "$key\n"
+#exit
+#insert       27,91,50,126,0,
+#home         27,91,72,0,0,
+#page up      27,91,53,126,0,
+#delete       27,91,54,126,0,
+#end          27,91,70,0,0,
+#page down    27,91,54,126,0,
+#backspace    127,0,0,0,0,
+#esc          27,0,0,0,0,
+#F1
+#F2           27,79,81,0,0,
+#F3           27,79,82,0,0,
+#F4           27,91,49,53,126,
+#F5           27,91,49,55,126,
+#F6           27,91,49,56,126,
+#F7           27,91,49,57,126,
+#F8           27,91,49,57,126,
+#F9           27,91,50,48,126,
+#F10
+#F11
+#F12          27,91,50,52,126,
+#up arrow     27,91,65,0,0,
+#down arrow   27,91,66,0,0,
+#left arrow   27,91,68,0,0,
+#right arrow  27,91,67,0,0,
+#space bar    32,0,0,0,0,
+#tab          9,0,0,0,0,
+EOF
+}
+
 #Why we use whereis instead of locate: 1.  because locate will see too many directories...like "Downloads" and, in the event of VMWare being present, the files of other virtual machines.
 # and #2: locate results are only as current as the last cron-scheduled update of its database while apps like poofitee that install supporting tools need immediate-after-install currency
 usrdir="";localdir="";sharedir="";bindir="";sbindir="";binaryflag="-b";dirsign="";counter=0
@@ -2656,44 +3236,48 @@ else
      awkpath="$($whereispath $binaryflag awk)"
      awkpath="${awkpath#*:}";awkpath="${awkpath# }";awkpath="${awkpath%% *}"
 fi
-whichpath="$($whereispath $binaryflag which)";whichpath="${whichpath#*:}";whichpath="${whichpath# }";whichpath="${whichpath%% *}"
 headpath="$($whereispath $binaryflag head)";headpath="${headpath#*:}";headpath="${headpath# }";headpath="${headpath%% *}"
-digpath="$($whereispath $binaryflag dig)";digpath="${digpath#*:}";digpath="${digpath# }";digpath="${digpath%% *}"
+curlpath="$($whereispath $binaryflag curl)";curlpath="${curlpath#*:}";curlpath="${curlpath# }";curlpath="${curlpath%% *}"
 unamepath="$($whereispath $binaryflag uname)";unamepath="${unamepath#*:}";unamepath="${unamepath# }";unamepath="${unamepath%% *}"
 sortpath="$($whereispath $binaryflag sort)";sortpath="${sortpath#*:}";sortpath="${sortpath# }";sortpath="${sortpath%% *}"
 filepath="$($whereispath $binaryflag file)";filepath="${filepath#*:}";filepath="${filepath# }";filepath="${filepath%% *}"
 lsmodpath="$($whereispath $binaryflag lsmod)";lsmodpath="${lsmodpath#*:}";lsmodpath="${lsmodpath# }";lsmodpath="${lsmodpath%% *}"
-# The reject and exit notices should be in order of how extensive of upgrades would be required.  Entire computer first, then OS, then executable version
-#  I haven't yet sorted them in that order
+# The reject and exit notices should be in order of how extensive of upgrades would be required.  Entire computer first, then OS, then executable version, then installed packages
 trap "echo $exitmsg" EXIT
-exitmsg="Thank you for running this POOFITEE configuration script...God loves you pass it on"
-dialogpath="$($whereispath $binaryflag dialog)";dialogpath="${dialogpath#*:}";dialogpath="${dialogpath# }";dialogpath="${dialogpath%% *}"
+exitmsg="Thank you for running this POOFITEE configuration script...God loves you...pass it on"
+dialogpath=""
+#dialogpath="$($whereispath $binaryflag dialog)";dialogpath="${dialogpath#*:}";dialogpath="${dialogpath# }";dialogpath="${dialogpath%% *}"
+whiplogpath="$dialogpath"
 #[[ -z "$dialogpath" ]] && whiptailpath="$($whereispath $binaryflag whiptail)";whiptailpath="${whiptailpath#*:}";whiptailpath="${whiptailpath# }";whiptailpath="${whiptailpath%% *}"
-whiptailpath="$($whereispath $binaryflag whiptail)";whiptailpath="${whiptailpath#*:}";whiptailpath="${whiptailpath# }";whiptailpath="${whiptailpath%% *}"
+#[[ -z "$dialogpath" ]] && whiplogpath="$whiptailpath"
+tputpath="$($whereispath $binaryflag tput)" ;tputpath="${tputpath#*:}";tputpath="${tputpath# }";tputpath="${tputpath%% *}"
+globalbacktitle="POOFITEE $version  Required Reading"
 if [[ "$($unamepath)" =~ BSD ]] || [[ "$($unamepath)" =~ Darwin ]];then
-    failreason="\n  This firewalling solution does not accommodate Mac nor BSD due to \
-iptables and crontab dysfunction in those *NIXes\n"
+    failreason="  This firewalling solution does not accommodate Mac nor BSD due to \
+iptables and crontab dysfunction in those *NIXes"
 fi
 if ! [[ "$($filepath "/bin/bash")" =~ ^/bin/bash:\ ELF ]];then
-    failreason+="\n  This version of POOFITEE is unable to run on non-ELF platforms \
-such as yours simply because the cron 'tail -F ... /var/log/syslog' entry uses stdbuf, \
-which is available only on OS platforms using ELF.\n"
+    failreason+="\n\n  This version of POOFITEE is unable to run on non-ELF platforms \
+such as yours simply because it's cron=scheduled 'tail -F ... /var/log/syslog' entry requires stdbuf, \
+which is available only on OS platforms using ELF."
 fi
+mkdir /tmp/fifos_and_temp_files_for_poofitee_installer 2>/dev/null
+touch /tmp/fifos_and_temp_files_for_poofitee_installer/file_create_rights_test 2>/dev/null
+rm /tmp/fifos_and_temp_files_for_poofitee_installer/file_create_rights_test &>/dev/null || \
+    failreason+="\n\n  Unable to create files the temporary directory needed: /tmp/fifos_and_temp_files_for_poofitee_installer"
 if ! [[ -z "$failreason" ]];then
-    failreason="\nTHANK YOU FOR TRYING POOFITEE INSTALLER, BUT YOUR COMPUTER CANNOT \
-RUN IT FOR THE FOLLOWING REASON[S]:\n\n$failreason\nPress any key..."
-    localbacktitle="POOFITEE  $version                                      Exit Notice"
-    if ! [[ -z "$dialogpath" ]];then
-        $dialogpath --title "$localtitle" --backtitle "$localbacktitle" --scrollbar --infobox "$failreason" 0 0
-    elif ! [[ -z "$whiptailpath" ]];then
-        $whiptailpath --title "$localtitle" --backtitle "$localbacktitle" --scrolltext --infobox "$failreason" 22 75
-    else
-        printf "$failreason"
-    fi
-    read -sn1;read -rst 0.001 -n3 discard
+    failreason="<center>THANK YOU FOR TRYING THIS POOFITEE INSTALLER, BUT...\
+\nYOU CANNOT RUN POOFITEE INSTALLER WITH YOUR OPERATING SYSTEM FOR THE FOLLOWING REASON[S]:\n\n$failreason$([[ -z "$whiptailpath" ]] && printf -- "\n\nPress any key...")"
+    localbacktitle="POOFITEE $version  Exit Notice"
+    showthis "$failreason" infobox "$localtitle" "$localbacktitle"
+    ! [[ -z "$dialogpath" ]] && read -sn1;read -rst 0.001 -n4 discard
     exit
 fi
+#We'll place this installer path variable here for future use possibly to inform in the next warning section
+installers=("apt-get" "-y install" dnf install yum install zypper install emerge "" pacman -S pkg install  pkg_add "" xbps-install -Sy brew install port install)
+installerpath=$($whereispath $binaryflag ${installers[$((installer + installer))]});installerpath="${installerpath#*:}";installerpath="${installerpath# }";installerpath="${installerpath%% *}";installerpath="${installerpath%%:*}"
 min_bash_version_tested="4.3.11"
+attention="YOUR COOPERATION OR ATTENTION IS NEEDED"
 if ! [[ "$($sortpath <<<"$(printf "$BASH_VERSION\n$min_bash_version_tested")"|$headpath -n 1)" == "$min_bash_version_tested" ]];then
    localwarning+=" run-time errors, your version of bash might be too old."
    trap "echo If you had$localwarning $exitmsg" EXIT
@@ -2706,7 +3290,8 @@ if ! [ "$(whoami)" == "root" ];then
 display menus.  No installation on this computer can be made by this script unless \
 re-launched by root.\n"
 fi
-if ! [[ -z "$sudopath" ]];then
+sudopath="$($whereispath $binaryflag sudo)";sudopath="${sudopath#*:}";sudopath="${sudopath# }";sudopath="${sudopath%% *}"
+if  [[ -z "$sudopath" ]];then
     ! [[ -z "$localwarning" ]] && localwarning+="\nAdditionally, \n"
     localwarning+="\nThe actual sudo command is necessary for several aspects of this installer, \
 but cannot be found.  Please install it before continuing.  Use another window or end this \
@@ -2714,34 +3299,71 @@ script and restart it later.  In Arch Linux you may install sudo using \
 the following command:\n\n		pacman -Syy base-devel\n"
 fi
 if ! [[ -z "$localwarning" ]];then
-    localwarning="\nYOUR OPERATING ENVIRONMENT IS NOT ENTIRELY ADEQUATE:\n\n$localwarning\n\npress any key, Ctrl-c aborts..."
-    if ! [[ -z "$dialogpath" ]];then
-        "$dialogpath" --title "$localtitle" --backtitle "$localbacktitle" --scrollbar --infobox "$localwarning" 0 0
-    elif ! [[ -z "$whiptailpath" ]];then
-        "$whiptailpath" --title "$localtitle" --backtitle "$localbacktitle" --scrollbar --infobox "$localwarning" 0 0
-    else
-        printf "$localwarning"
-    fi
-    read -sn1;read -rst 0.001 -n3 discard
+    localwarning="<center>Your operating system is not entirely adequate:\n\n""$localwarning""$([[ -z "$whiptailpath" ]] && printf -- "\n\npress any key, Ctrl-c aborts....")"
+    localbacktitle="POOFITEE $version  Deficiency Notice"
+    showthis "$localwarning" "infobox" "YOUR COOPERATION OR ATTENTION IS NEEDED" "$localbacktitle"
+    ! [[ -z "$dialogpath" ]] && read -sn1;read -rst 0.001 -n3 discard
+fi
+
+#  Beginning of copyright message
+clear
+showthis "\n<center>POOFITEE IS CURRENTLY AVAILABLE IN EXPERIMENTAL STATUS\
+\n\n\nSpecifically -\
+\n\n - No ability to configure either virtual or normal interfaces for you.  Little or no \
+testing has been done in a virtual interface environment, but no problems per se are expected.\
+\n\n - No ability to differentiate between, nor work with, initsystem types.  \
+So for persistence of whatever this script installs, you're on your own.\
+\n\n - No command line help, package [un]installation including dependency tracking, \
+nor man (reference manual pager) support is provided.\
+\n\n - If loadable modules for iptables are not automatically loaded in your Linux \
+kernel as it is configured, some options of poofitee will end execution \
+of this script early and inform you to manually load the ipset module, \
+a one-time necessary event. Currently, poofitee is not advanced enough to \
+load kernel modules itself.\
+\n\n\n<center>Your suggestions for improvements are solicited and \
+welcome.  Use the POOFITEE Wiki to offer them...\
+\n\n\n<center>Copyright 2016 - Kenneth L. Anderson MCSE, RDH, BGS, BT\
+\n\n\nThis work of authorship is made available to you under only one out of the \
+following two arrangements.  In both arrangements, this copyright message must \
+remain with this work of authorship and any and all of its derivatives.\
+\n\n1.  Arrangement for your freedom from monetary obligation to the author:\
+\n - This copyright message must continue to be displayed at launch time\
+\n - This copyright message includes the statement\
+\n\n<center>\"Jesus Christ is Lord of all ... press key/click OK to acknowledge\"\
+\n\ndisplayed on its own line with blank lines adjacently both above and below \
+said statement and rendered statically without attempt made to render said \
+statement transiently.\
+\n\n2.  Arrangement for your freedom from copyright display obligation, or to \
+contribute, see the comments within the source code of this script.\
+\n\n<center>Jesus Christ is Lord of all ... press a key/click OK to acknowledge" \
+msgbox \
+"Limitations and Copyright" \
+"POOFITEE $version  Copyright Screen"
+[[ -z "$whiplogpath" ]] && read -sn1;read -rst 0.001 -n4 discard
+if [[ "$*" =~ ^awk=/ ]] || [[ "$*" =~ \ awk=/ ]];then
+    index=1
+    for arg in "$@"
+    do
+        [[ "${arg#*'awk='}" == "$arg" ]] || awkpath="${arg#*'awk='}"
+        ! [[ -z "$awkpath" ]] && break
+        let "index+=1"
+    done
+else
+     awkpath="$($whereispath $binaryflag awk)"
+     awkpath="${awkpath#*:}";awkpath="${awkpath# }";awkpath="${awkpath%% *}"
 fi
 #force these to be global variables, we need them to perform the install:
 gawkpath=""
 mawkpath=""
 # pythonpath="$($whereispath $binaryflag python)";pythonpath="${pythonpath#*:}";pythonpath="${pythonpath# }";pythonpath="${pythonpath%% *}"
 until ! [[ -z "$sudopath" ]];do
-    sudopath="$($whereispath $binaryflag sudo)";sudopath="${sudopath#*:}";sudopath="${sudopath# }";sudopath="${sudopath%% *}"
-    if [[ -z "$sudopath" ]];then
-	    cat <<-EOF
-		The actual sudo command is necessary for several aspects of this installer, but
-		cannot be found.  Please install it before continuing.  Use another window or
-		end this script and restart it later.  In Arch Linux you may install sudo using
-		the following command:
-
-		pacman -Syy base-devel
-
-		EOF
+    showthis "The actual sudo command is necessary for several aspects of this installer, \
+but it cannot be found.  Please install it before continuing.  Use another window or \
+end this script and restart it later.  In Arch Linux you may install sudo using \
+the following command:\
+\n\n       pacman -Syy base-devel\n" infobox "Reminder Notice" "$globalbacktitle"
         press_a_key
-    fi
+    sudopath="$($whereispath $binaryflag sudo)";sudopath="${sudopath#*:}";sudopath="${sudopath# }";sudopath="${sudopath%% *}"
 done
 ifconfigpath="$($whereispath $binaryflag ifconfig)";ifconfigpath="${ifconfigpath#*:}";ifconfigpath="${ifconfigpath# }";ifconfigpath="${ifconfigpath%% *}"
 pumppath="$($whereispath $binaryflag pump)";pumppath="${pumppath#*:}";pumppath="${pumppath# }";pumppath="${pumppath%% *}"
@@ -2753,85 +3375,52 @@ getentpath="$($whereispath $binaryflag getent)";getentpath="${getentpath#*:}";ge
 adduserpath="$(whereis $binaryflag adduser)";adduserpath="${adduserpath#*:}";adduserpath="${adduserpath# }";adduserpath="${adduserpath%% *}"
 # dhcp_lease_path=$($findpath / -maxdepth 5 -name dhclient*.lease* 2> /dev/null)
 rhelchkconfigpath="$($whereispath $binaryflag chkconfig)";rhelchkconfigpath="${rhelchkconfigpath#*:}";rhelchkconfigpath="${rhelchkconfigpath# }";rhelchkconfigpath="${rhelchkconfigpath%% *}"
-# eval "$pythonpath -c \"import platform;print(platform.linux_distribution()[0])\" &> /dev/null > \"distributionby.${0#*/}\"" \
+# eval "$pythonpath -c \"import platform;print(platform.linux_distribution()[0])\" &> /dev/null > "/tmp/fifos_and_temp_files_for_poofitee_installer\distributionby.${0#*/}\"" \
 #    || (eval "printf \"Functionality may be limited due to inability to determine distribution type\n";press_a_key) \
-#    || eval "echo $OSTYPE > \"distributionby.${0#*/}\""
+#    || eval "echo $OSTYPE > "/tmp/fifos_and_temp_files_for_poofitee_installer\distributionby.${0#*/}\""
 # eval "$ifconfigpath -a|$awkpath -F'^ ' '{print \$1}'|$awkpath '{print \$1}'|$greppath -vw lo|$xargspath" > "interfacesby.${0#*/}"
-internal_net_interfaces="$($ippath link show|$greppath -E "^[1-9][0-9]*:"|$greppath -v lo:\
-    |$greppath -v "$external_net_interface"\
-    |$sedpath 's/://g'\
-    |$awkpath '{print $2}')\n"
-likeliest_internal_net_interface="$(printf "$internal_net_interfaces"|$headpath -n1)"
-#echo "$( [[ $(printf "$internal_net_interfaces"|$wcpath -l) == "1" ]] \
-#    && echo "$(printf "$internal_net_interfaces"|$wcpath -l) interface" \
-#    || echo "$(printf "$internal_net_interfaces"|$wcpath -l) interfaces") not going to google=$internal_net_interfaces"
-# echo "Script-required items: whereis path=$whereispath, awk path=$awkpath, python path=$pythonpath, grep path=$greppath, ifconfig path=$ifconfigpath, uniq path=$uniqpath, sort path=$sortpath, head path=$headpath";exit
-#
-# Introduction and what we'll do
+# Introduction ? and what we'll do
 # POOFITEE: "Packet filtering Owner Only access linux Firewall - the system is Invisible To Everyone Else"
 external_net_interface="$($ippath -o route get 8.8.8.8 2>/dev/null|$awkpath '{for (i=1;i<=NF;i++) {if ($i=="dev"){ print $(i+1);exit }}}')"
-if [ -z "$external_net_interface" ];then
-     clear
-     printf "\nUnable to identify an Internet connection."
-     until (printf "$($ippath link show|$greppath -E "^[1-9][0-9]*:"|$greppath -v lo:\
-         |$sedpath 's/://g'\
-         |$awkpath '{print $2}')\n"|$greppath "$external_net_interface" > /dev/null) && ! [ -z "$external_net_interface" ];do
-          printf "  Type in the name of the Internet-\
-\nfacing interface from the following choices:\n"
-     printf "$($ippath link show|$greppath -E "^[1-9][0-9]*:"|$greppath -v lo:\
-         |$sedpath 's/://g'\
-         |$awkpath '{print $2}')\n"
-         read -er external_net_interface
-         printf "\n$internal_net_interfaces\nand\n$external_net_interface\n"
-     done
+internal_net_interfaces="$($ippath link show|$greppath -E "^[1-9][0-9]*:"|$greppath -vw lo:\
+    |$greppath -vw "$external_net_interface"\
+    |$sedpath 's/://g'\
+    |$awkpath '{print $2}')"
+! [[ -z "$internal_net_interfaces" ]] && internal_net_interfaces+="\n"
+likeliest_internal_net_interface="$(printf "$internal_net_interfaces"|$headpath -n1)"
+if  [[ -z "$external_net_interface" ]];then
+    internal_net_interfaces="$($ippath link show|$greppath -E "^[1-9][0-9]*:"|$greppath -vw lo:\
+        |$sedpath 's/://g'\
+        |$awkpath '{print $2}')"
+    ! [[ -z "$internal_net_interfaces" ]] && internal_net_interfaces+="\n"
+    until ! [[ -z "$external_net_interface" ]];do
+        rm /tmp/fifos_and_temp_files_for_poofitee_installer/answergui 2>/dev/null
+        clear
+        showthis "\n<center>Unable to identify an Internet connection\n\nType in/select the name of the Internet-\
+facing interface from the following choices, but even so, without Internet access no dependency packages can be installed (obviously):\n" \
+            radiolist "$attention" "$globalbacktitle" $(printf "$internal_net_interfaces"|$wcpath -l) \
+             $($ippath link show|$greppath -E "^[1-9][0-9]*:"|$greppath -vw lo:\
+             |$sedpath 's/://g'\
+             |$awkpath '{print $2" OFF"}')
+        [[ -f /tmp/fifos_and_temp_files_for_poofitee_installer/answergui ]] && [[ $(($(wc -l < /tmp/fifos_and_temp_files_for_poofitee_installer/answergui))) -gt 0 ]] && \
+            external_net_interface=$(cat /tmp/fifos_and_temp_files_for_poofitee_installer/answergui 2>/dev/null) || \
+            $ippath link show|$greppath -E "^[1-9][0-9]*:"|$greppath -v lo:\
+             |$sedpath 's/://g'\
+             |$awkpath '{print "-> "$2}' >/dev/null \
+               && external_net_interface="" \
+               && read -er external_net_interface
+        printf "$internal_net_interfaces"|$greppath -w $external_net_interface &>/dev/null\
+            && internal_net_interfaces="$($ippath link show|$greppath -E "^[1-9][0-9]*:"|$greppath -vw lo:\
+               |$greppath -vw "$external_net_interface"\
+               |$sedpath 's/://g'\
+               |$awkpath '{print $2}')" \
+            || external_net_interface=""
+    done
 fi
-$whiptailpath --title "WELCOME TO THE POOFITEE INSTALLER!" \
---backtitle "POOFITEE  $version             page up/down                Copyright Notice" \
---yesno \
---no-button "Continue" \
---yes-button "Go Back/Quit" \
-"            POOFITEE IS CURRENTLY AVAILABLE IN TESTING STATUS\
-\n\
-\nSpecific limitations of this version -\
-\n\
-\n- No ability to differentiate between nor work with initsystem types.\
-\n    For persistence of this installation, you're on your own.
-\n\
-\n- No integrated dependencies support is provided\
-\n\
-\n- No uninstall feature is provided\
-\n\
-\n- If loadable modules for iptables are not automatically loaded in your\
-\n    Linux kernel as it is configured, some options of poofitee will end\
-\n    execution of this script early and inform you to manually load the\
-\n    ipset module, a one-time necessary event. Currently, poofitee is not\
-\n    advanced enough to load kernel modules itself.\
-\n\
-\nYour suggestions for improvements are solicited and welcome.  Use the\
-\nPOOFITEE Wiki to offer them...\
-\n\n         Copyright 2016 - Kenneth L. Anderson MCSE, RDH, BGS, BT\
-\n\nThis work of authorship is made available to you under only one out of\
-\nthe following two arrangements.  In both arrangements, this copyright\
-\nmessage must remain with this work of authorship and any and all of its\
-\nderivatives, except that these requirements will be void if found to be\
-\nin explicit and irreconcileable conflict with any copyright of a package\
-\nintegrated herein.\
-\n\n1.  Arrangement for your freedom from monetary obligation to the author:\
-\n - This copyright message must continue to be displayed at launch time\
-\n - This copyright message includes the statement\
-\n\n\"Jesus Christ is Lord of all  ... tab to and select Continue to acknowledge\" \
-\n\ndisplayed on its own line with blank lines adjacently both above and\
-\nbelow said statement and rendered statically without attempt made to\
-\nrender said statement transiently.\
-\n\n2.  Arrangement for your freedom from copyright display obligation, or\
-\nto contribute, see the comments within the source code of this script\
-\n\nJesus Christ is Lord of all  ... tab to and select Continue to acknowledge" \
---scrolltext 22 76
-[ "$?" == "0" ] && exit
 maintitle="SELECT DESIRED OPTIONS FOR THIS INSTALLATION"
-mainbacktitle="POOFITEE  $version$(printf '%.s'" " $(seq 48))Main Menu"
-mainchecklisttest="\nTab to and select with spacebar all or any services listed below that\
-\nyou want, then tab to and select OK or Cancel\n"
+mainbacktitle="POOFITEE $version  Main Menu"
+mainchecklisttest="\n<center>Select with spacebar/tab/etc. all or any services listed below that \
+you want, then enter/OK\n"
 maincheckitems=("firewalling" \
 "email remote control" \
 "dynamic IP address change notifier" \
@@ -2839,7 +3428,8 @@ maincheckitems=("firewalling" \
 "lists (white, black, & static_trusted) to/from storage" \
 "copy current configuration to a storage medium" \
 "restore the previously saved configuration" \
-"include context helpful information" \
+"helpful information, alone or in context" \
+"quit" \
 "f" \
 "e" \
 "d" \
@@ -2847,9 +3437,10 @@ maincheckitems=("firewalling" \
 "c" \
 "l" \
 "r" \
+"q" \
 "?")
 answer=""
-ghbacktitle="POOFITEE  $version$(printf '%.s'" " $(seq 48))Main Menu"
+ghbacktitle="POOFITEE $version  Main Menu"
 ghscreen1="This set of Linux scripts can install several Internet security features useful \
 in homeowner and enterprise systems alike. Enterprise systems however, typically \
 are stranger-visible, but POOFITEE ruleset produces stranger-INvisibility.  Gone \
@@ -2981,16 +3572,25 @@ firewalling you'll set up next to apply only to this computer.  If instead you \
 want this firewalling computer to protect other devices with its firewalling \
 services, select"
 postfix_already_conf=""
-until ! [ -z "$answer" ];do
-    { if [[ $($pspath aux|$greppath -vw grep|$greppath -we pump -we dhclient -we udhcpc -we dhcpcd -we dhclient3|$greppath -w $external_net_interface|$wcpath -l) -ne 0 ]] \
-           && [[ firewall_external_interface_not_in_privateIP_ranges =~ 123 ]];then
-        $whiptailpath --separate-output --title "$maintitle" \
-        --cancel-button "Continue" \
-        --ok-button "Go Back/Quit" \
-        --backtitle  "$mainbacktitle"\
-        --checklist "$mainchecklisttest"\
-        --noitem \
-        17 75 8 \
+quitrow=""
+index=0
+if ! [[ "$notdhcp" == "notdhcp" ]];then
+    for letter in f e p l c r \? q;do
+        chararray[index]=$letter
+        index=$((index + 1))
+    done
+else
+    for letter in f e d p l c r \? q;do
+        chararray[index]=$letter
+        index=$((index + 1))
+    done
+fi
+answer=""
+until ! [[ -z "$answer" ]];do
+    if [[ $($pspath aux|$greppath -vw grep|$greppath -we pump -we dhclient -we udhcpc -we dhcpcd -we dhclient3|$greppath -w $external_net_interface|$wcpath -l) -ne 0 ]] \
+           && [[ $(firewall_external_interface_not_in_privateIP_ranges;printf "$?") =~ 13 ]];then
+#           && [[ $(firewall_external_interface_not_in_privateIP_ranges;printf "$?") =~ 123 ]];then
+        showthis "$mainchecklisttest" checklist "$maintitle" "$mainbacktitle" 9 \
         "${maincheckitems[0]}" OFF \
         "${maincheckitems[1]}" OFF \
         "${maincheckitems[2]}" OFF \
@@ -2998,53 +3598,49 @@ until ! [ -z "$answer" ];do
         "${maincheckitems[4]}" OFF \
         "${maincheckitems[5]}" OFF \
         "${maincheckitems[6]}" OFF \
-        "${maincheckitems[7]}" OFF
+        "${maincheckitems[7]}" OFF \
+        "${maincheckitems[8]}" OFF
     else
         notdhcp="notdhcp"
-        mainchecklisttest+="\n\nNot available with this IP address: dynamic IP address change notifier\n"
-        $whiptailpath --separate-output --title "$maintitle" \
-        --cancel-button "Continue" \
-        --ok-button "Go Back/Quit" \
-        --backtitle  "$mainbacktitle" \
-        --checklist "$mainchecklisttest" \
-        --noitem \
-        19 75 7 \
+        mainchecklisttest+="<center>(Not available with this IP address: dynamic IP address change notifier)\n"
+        showthis "$mainchecklisttest" checklist "$maintitle" "$mainbacktitle" 8 \
         "${maincheckitems[0]}" OFF \
         "${maincheckitems[1]}" OFF \
         "${maincheckitems[3]}" OFF \
         "${maincheckitems[4]}" OFF \
         "${maincheckitems[5]}" OFF \
         "${maincheckitems[6]}" OFF \
-        "${maincheckitems[7]}" OFF
-    fi;}  2>answergui
-    [ "$?" == "0" ] && exit
-    halfnumofitems="$((${#maincheckitems[@]} / 2 - 1))"
-    while read line;do
-        for ((i=0;i<=halfnumofitems;i++));do
-            if [[ "$line" == "${maincheckitems[i]}" ]];then
-                answer+="${maincheckitems[i+((${#maincheckitems[@]} / 2))]}"
-                break
-            fi
-        done
-    done < answergui
-    rm answergui
+        "${maincheckitems[7]}" OFF \
+        "${maincheckitems[8]}" OFF
+    fi
+#    [ "$?" == "0" ] && exit
+#clear
+    answer=""
+    while read line;do # change numbers to letters for compatibility with original code
+        [[ -z "$line" ]] || answer+=${chararray[line]}
+    done < /tmp/fifos_and_temp_files_for_poofitee_installer/answergui
+#printf "$answer\n"
+#    rm /tmp/fifos_and_temp_files_for_poofitee_installer/answergui
+    if [[ $answer =~ q ]];then
+        $tputpath cup $((quitrow)) 0
+        exit
+    fi
     clear
     if [[ $answer =~ \? ]];then
 #        printf "  Since info is selected, no changes are to be made"
         if [[ $answer == "?" ]];then
-            $whiptailpath --yesno \
-            --backtitle "POOFITEE  $version      Main menu will resume later      Information Screen" \
-            --title "HELPER SCRIPT OVERVIEW" \
-            "$ghscreen1""$ghscreen2" \
+            showthis "$ghscreen1""$ghscreen2" yesno \
+            "HELPER SCRIPT OVERVIEW" \
+            "POOFITEE $version  Main menu will resume later  Information Screen" \
             --yes-button "Scrolled, now proceed" \
             --no-button "Quit now" \
             --scrolltext 22 76
             [ "$?" != "0" ] && exit
         fi
         if [[ $answer =~ f ]] || [[ $answer == "?" ]];then
-            $whiptailpath --yesno \
-            --backtitle "POOFITEE  $version      Main menu will resume later      Information Screen" \
-            --title "FIREWALLING WITH THIS SCRIPT SET" \
+            showthis "$ghscreen1""$fwscreen" yesno \
+            "POOFITEE $version  Main menu will resume later  Information Screen" \
+            "FIREWALLING WITH THIS SCRIPT SET" \
             "$ghscreen1""$fwscreen" \
             --yes-button "Scrolled, now proceed" \
             --no-button "Quit now" \
@@ -3052,60 +3648,55 @@ until ! [ -z "$answer" ];do
             [ "$?" != "0" ] && exit
         fi
         if [[ $answer =~ e ]] || [[ $answer == "?" ]];then
-            $whiptailpath --yesno \
-            --backtitle "POOFITEE  $version      Main menu will resume later      Information Screen" \
-            --title "REMOTE CONTROL VIA EMAIL WITH THIS SCRIPT SET" \
-            "$rcscreen" \
+            showthis "$rcscreen" yesno \
+            "REMOTE CONTROL VIA EMAIL WITH THIS SCRIPT SET" \
+            "POOFITEE $version  Main menu will resume later  Information Screen" \
+             \
             --yes-button "Scrolled, now proceed" \
             --no-button "Quit now" \
             --scrolltext 22 76
             [ "$?" != "0" ] && exit
         fi
         if [[ $answer =~ l ]] || [[ $answer == "?" ]];then
-            $whiptailpath --yesno \
-            --backtitle "POOFITEE  $version      Main menu will resume later      Information Screen" \
-            --title "EMAIL NOTIFY OF DYNAMIC IP ADDRESS CHANGE WITH THIS SCRIPT SET" \
-            "$listscreen" \
+            showthis "$listscreen" yesno \
+            "EMAIL NOTIFY OF DYNAMIC IP ADDRESS CHANGE WITH THIS SCRIPT SET" \
+            "POOFITEE $version  Main menu will resume later  Information Screen" \
             --yes-button "Scrolled, now proceed" \
             --no-button "Quit now" \
             --scrolltext 22 76
             [ "$?" != "0" ] && exit
         fi
         if [[ $answer =~ d ]] || [[ $answer == "?" ]];then
-            $whiptailpath --yesno \
-            --backtitle "POOFITEE  $version      Main menu will resume later      Information Screen" \
-            --title "PORT KNOCKING WITH THIS SCRIPT SET" \
-            "$dascreen" \
+            showthis "$dascreen" yesno \
+            "PORT KNOCKING WITH THIS SCRIPT SET" \
+            "POOFITEE $version  Main menu will resume later  Information Screen" \
             --yes-button "Scrolled, now proceed" \
             --no-button "Quit now" \
             --scrolltext 22 76
             [ "$?" != "0" ] && exit
         fi
         if [[ $answer =~ p ]] || [[ $answer == "?" ]];then
-            $whiptailpath --yesno \
-            --backtitle "POOFITEE  $version      Main menu will resume later      Information Screen" \
-            --title "BLACK, WHITE, & STATIC_TRUSTED FIREWALL LISTS" \
-            "$pkscreen" \
+            showthis "$pkscreen" yesno \
+            "BLACK, WHITE, & STATIC_TRUSTED FIREWALL LISTS" \
+            "POOFITEE $version  Main menu will resume later  Information Screen" \
             --yes-button "Scrolled, now proceed" \
             --no-button "Quit now" \
             --scrolltext 22 76
             [ "$?" != "0" ] && exit
         fi
         if [[ $answer =~ s ]] || [[ $answer == "?" ]];then
-            $whiptailpath --yesno \
-            --backtitle "POOFITEE  $version      Main menu will resume later      Information Screen" \
-            --title "SAVING YOUR INSTALLED CONFIGURATION" \
-            "$savescreen" \
+            showthis "$savescreen" yesno \
+            "SAVING YOUR INSTALLED CONFIGURATION" \
+            "POOFITEE $version  Main menu will resume later  Information Screen" \
             --yes-button "Scrolled, now proceed" \
             --no-button "Quit now" \
             --scrolltext 22 76
             [ "$?" != "0" ] && exit
         fi
         if [[ $answer =~ r ]] || [[ $answer == "?" ]];then
-            $whiptailpath --yesno \
-            --backtitle "POOFITEE  $version      Main menu will resume later      Information Screen" \
-            --title "RESTORING YOUR PREVIOUSLY SAVED CONFIGURATION" \
-            "$restorescreen" \
+            showthis "$restorescreen" yesno \
+            "RESTORING YOUR PREVIOUSLY SAVED CONFIGURATION" \
+            "POOFITEE $version  Main menu will resume later  Information Screen" \
             --yes-button "Scrolled, now proceed" \
             --no-button "Quit now" \
             --scrolltext 22 76
@@ -3127,7 +3718,6 @@ until ! [ -z "$answer" ];do
 #                  printf "There are $(what_needs_to_be_installed;echo "$?") things needing to be installed";read -srn1
                   [[ "$?" == "0" ]] && break 2
                   ground_zero_install_needs="$not_installed_single_line"
-                  installers=("apt-get" "-y install" dnf install yum install zypper install emerge "" pacman -S pkg install  pkg_add "" xbps-install -Sy brew install port install)
 
 #                  installers=("DEBIAN_FRONTEND=noninteractive apt-get" "install --fix-missing --force-yes" dnf install yum install zypper install emerge "" pacman -S pkg install pkg_add "" xbps-install -Sy brew install port install)
                   for installer in {0..10};do
@@ -3176,7 +3766,6 @@ until ! [ -z "$answer" ];do
                            printf "Installation of\n$notinstalled\n\nis required next.  Press u to update your system's package installer first,\
 \npress b to both update your system's package installer & have it run autoremove,\
 \nany other letter or number key not to update the installer first.  \n"
-# TODO:  Needs to force update run if the first go-around doesn't install any packages.
                            press_a_key u b
                            if [[ "$REPLY" =~ [Bb] ]];then
                                 clear
@@ -3207,20 +3796,6 @@ until ! [ -z "$answer" ];do
 #switch_from_more_common_package_to_less_common_package netfilter-persistent netfilter-persistent iptables-persistent iptables-persistent
 # might need to check out http://tldp.org/LDP/abs/html/complexfunct.html
 # can uninitialized variables be passed into function by reference?  Of course not!
-                 if [[ "$not_installed_single_line" =~ ^dnsutils ]];then
-                      if ! [[ -z "$dnsutils_already_given_a_chance" ]];then
-                           digpath=$($whereispath $binaryflag drill);digpath="${digpath#*:}";digpath="${digpath# }";digpath="${digpath%% *}"
-#                           printf "...Not a problem...\n"
-                           if [[ -z $digpath ]];then
-                                 eval "$xargspath -a <(printf ""|$sedpath 's/dnsutils/ldns/1') -r -- $sudopath $installerpath"
-                                 digpath=$($whereispath $binaryflag drill);digpath="${digpath#*:}";digpath="${digpath# }";digpath="${digpath%% *}"
-                                 what_needs_to_be_installed
-                                 dnsutils_already_given_a_chance=""
-                           fi
-                      else
-                           dnsutils_already_given_a_chance="anyvaluewillwork"
-                      fi
-                 fi
                  if [[ "$not_installed_single_line" =~ ^netfilter-persistent ]];then
                       if ! [[ -z "$netfilter_persistent_already_given_a_chance" ]];then
                            netfilter_persistent_already_given_a_chance=""
@@ -3421,7 +3996,6 @@ until ! [ -z "$answer" ];do
         [[ "$answer" =~ [fp] ]] && advise_to_verify_persistency
     fi
 done
-exit
 
 #IPSet RANDOM NOTES FOLLOW FROM DIFFERENT SITES.  DO WEB SEARCH ON THEM FOR MORE DETAILS
 #
