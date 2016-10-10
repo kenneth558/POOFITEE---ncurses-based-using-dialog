@@ -2575,13 +2575,13 @@ outemail_warnings () {
 
 end_warnings () {
          printf "Remember always this fact of life:  Email providers do make unpredictable\
-\nchanges to their email service!  The same holds true for ISPs.  Blame that any\
+\nchanges to their email service!  The same holds true for ISPs.  Blame that on any\
 \nnumber of different reasons...technical, social, and otherwise.  Be aware that\
-\nthe settings you just created may need to be adjusted in the future in response\timeou
+\nthe settings you just created may need to be adjusted in the future in response\
 \nto changes that others WILL make to affect your Internet experience, even\
 \nchanges expressly designed to limit the usefulness of this fine enhancement\
 \nyou've made to your Internet connectivity!  Though let's hope they'll have\
-\nbetter reason for doing so than that."
+\nbetter reason for doing so than merely to be that way."
 }
 get_1_addr_from_bunch() {
 #one arg: a bunch of newline delimited email addresses, except no newline following last entry
