@@ -1921,14 +1921,13 @@ while true;do
                   for MAIL_PROT in pop pop3 mail;do
                        for port in 465 995 110 993;do
                             printf "\rChecking $MAIL_PROT.$inemailprovider:$port\033[K"
-#The following script file does not exist
                             (/tmp/fifos_and_temp_files_for_poofitee_installer/timeouttry.sh -t 2 "exec 5>&-;exec 5<>/dev/tcp/$MAIL_PROT.$inemailprovider/$port;read -u 5 HELO;! [[ -z \$HELO ]] && echo \"$MAIL_PROT:$port\" >> \"$poofitee_home_dir/$inemailprovider.inconnects.txt\";printf \"quit\" >&5;read -t 2 -u 5 QUIT;exec 5>&-")
                        done  2> /dev/null
                   done
                   if [[ -f "$poofitee_home_dir/$inemailprovider.inconnects.txt" ]];then
                        printf "\rThe possibilities are\033[K\n$(<"$poofitee_home_dir/$inemailprovider.inconnects.txt")"
                   else
-                       printf "\r\033[K\033[2ASelected email provider isn't allowing an initial connection right now, or maybe\
+                       printf "\r\033[K\033[2ASelected email provider isn't allowing an initial connection right now or maybe\
 \nthe Internet connection is faulty.  Press Ctrl-c to abort retries...\n"
 # We need a better way to interrupt this
                        continue
@@ -2281,6 +2280,9 @@ if [ -f "/etc/protocols" ];then
 else
 :
 fi
+until ! ($iptablespath -w -nL PREROUTING -t raw             |$greppath -- "^LOG     "|$greppath -- " dpt:" |$greppath -- "fetch email "|$greppath "This rule ensures email-reader port knock won't get ignored") >/dev/null ;do
+    $iptablespath -w -D PREROUTING $($iptablespath -w -nL PREROUTING -t raw --line-numb      |$greppath -- "^.....LOG     "|$greppath -- "fetch email " |$greppath -- " dpt:"|$greppath "This rule ensures email-reader port knock won't get ignored"|$awkpath '{printf $1;exit}') -t raw &>/dev/null
+done
 [[ $($iptablespath -w -I PREROUTING 1 -t raw -m comment --comment "This rule ensures email-reader port knock won't get ignored" -p $emailproto --dport $emailport -j LOG --log-prefix "fetch email " &>/dev/null;echo "$?") == "0" ]] || printf "Failed 22"
 }
 
@@ -4225,7 +4227,8 @@ is a web page that may help you with that:\
             conf_postfix
             install_tail_f_lines_and_receiving_script
         fi
-        [[ "$answer" =~ [fp] ]] && advise_to_verify_persistency
+        [[ "$answer" =~ [fep] ]] && advise_to_verify_persistency
+        end_warnings
     fi
 done
 
