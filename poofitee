@@ -334,7 +334,7 @@ if [[ $answer =~ p ]];then
 fi
 pronotinstalled="$(printf "$notinstalled"|$sortpath|$uniqpath)\n"
 # packages are in alpha order so duplicates got removed, now we need to rearrange to workable order
-# packages that need to be tried once and changed go first, then awk/gawk/mawk/nawk, example shown commented below, but awk is dealt with elsewhere instead of here
+# packages that need to be tried once and changed go first, then awk/gawk/mawk/nawk, example shown commented below, but those are dealt with elsewhere instead of here
 # netfilter-persistent first, then crontab, then awk/gawk/mawk/nawk for example
 printf "$pronotinstalled"|while read package;do [[ "$package" == "netfilter-persistent" ]] && echo "$package" > /tmp/fifos_and_temp_files_for_poofitee_installer/notinstalled;done
 printf "$pronotinstalled"|while read package;do [[ "$package" != "netfilter-persistent" ]] && [[ "$package" == "cronie" ]] && echo "$package" >> /tmp/fifos_and_temp_files_for_poofitee_installer/notinstalled;done
@@ -4310,3 +4310,4 @@ done
 #
 # ip sets can then be created and used as per documentation. See http://ubuntuforums.org/showthread.php?t=1590923 for an example.
 #
+
