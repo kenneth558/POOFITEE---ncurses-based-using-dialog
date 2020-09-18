@@ -140,6 +140,7 @@ logo="\
 # TODO: replace iptables with nftables
 # TODO: before anything that requires iptables to be persistent is started, make sure iptables is persistently configured
 # TODO:  before installing on Raspbian, set up /etc/apt/sources.list with some valid repository like: deb http://mirror.glennmcgurrin.com/raspbian/ jessie main contrib non-free rpi
+# TODO:  use coproc where indicated instead of launching in background or perhaps when testing for socket communications
 # installing postfix is different for different distros, may not be "postmap"
 # So why anyone would want a blacklist to accumulate:
 #  1) differentiate between neutral and hostile when providing public services,
