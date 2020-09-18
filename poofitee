@@ -2947,6 +2947,7 @@ read -rsn 1;read -rst 0.001 -n4 discard
 }
 
 layitout () { # For this to work
+    printf "\r"
     printf -- "$1\n"| \
       while IFS= read -r line;do
          if [[ -z "$screen_line" ]]; then
@@ -2994,9 +2995,9 @@ layitout () { # For this to work
              fi
              printf -- "$printout"
          done
-    done 
-return 
-} 
+    done
+return
+}
 showthis () {
  # $1 is main text to display
  # $2 is type of box to use
@@ -3008,7 +3009,7 @@ showthis () {
  # THEREFORE THE WHIPLOG ANSWER WILL BE CONTROLLED WITHIN HERE, THE FILE NAME CONTAINING THE ANSWER IS THEN HARDCODED BOTH HERE AND IN THE CALLER 
 if ! [[ -z "$tputpath" ]];then
     rows="$($tputpath lines)"
-    cols="$(($($tputpath cols)))" 
+    cols="$(($($tputpath cols)))"
 fi
 if [[ -z "$tputpath" ]] && ! [[ -z "$resizepath" ]];then # Resizing tested slower than using tput
     eval `$resizepath`
@@ -3635,7 +3636,7 @@ filepath="$($whereispath $binaryflag file)";filepath="${filepath#*:}";filepath="
 lsmodpath="$($whereispath $binaryflag lsmod)";lsmodpath="${lsmodpath#*:}";lsmodpath="${lsmodpath# }";lsmodpath="${lsmodpath%% *}"
 # The reject and exit notices should be in order of how extensive of upgrades would be required.  Entire computer first, then OS, then executable version, then installed packages
 exitmsg="Thank you for running this POOFITEE configuration script...God loves you...pass it on"
-trap "echo $exitmsg" EXIT
+trap "echo;echo $exitmsg" EXIT
 dialogpath=""
 dialogpath="$($whereispath $binaryflag dialog)";dialogpath="${dialogpath#*:}";dialogpath="${dialogpath# }";dialogpath="${dialogpath%% *}"
 whiplogpath="$dialogpath"
@@ -3662,7 +3663,7 @@ use_journalctl_authlog=""
 # OK as long as for all three we have one or the other means of examining, favor systemd
 
 if ! [[ -z "$journalctlpath" ]] && $journalctlpath -n1 --no-pager SYSLOG_FACILITY=3 &>/dev/null;then
-     use_journalctl_syslog=true    
+     use_journalctl_syslog=true
 elif ! [[ -f "/var/log/syslog" ]];then
 #    || ! ls -altr /var/log/syslog /run/*.pid 2>/dev/null|$tailpath -n1|$greppath /var/log/syslog &>/dev/null;then
     [[ -z "$failreason" ]] || failreason+="\n\n"
@@ -3670,7 +3671,7 @@ elif ! [[ -f "/var/log/syslog" ]];then
 /var/log/syslog or systemd for logging."
 fi
 if ! [[ -z "$journalctlpath" ]] && $journalctlpath -n1 --no-pager SYSLOG_FACILITY=0 &>/dev/null;then
-     use_journalctl_kernlog=true    
+     use_journalctl_kernlog=true
 elif ! [[ -f "/var/log/kern.log" ]];then
 #     || ! ls -altr /var/log/kern.log /run/*.pid 2>/dev/null|$tailpath -n1|$greppath /var/log/kern\.log &>/dev/null;then
     [[ -z "$failreason" ]] || failreason+="\n\n"
@@ -3678,7 +3679,7 @@ elif ! [[ -f "/var/log/kern.log" ]];then
 /var/log/kern.log or systemd for logging."
 fi
 if ! [[ -z "$journalctlpath" ]] && $journalctlpath -n1 --no-pager SYSLOG_FACILITY=4 &>/dev/null && $journalctlpath -n1 SYSLOG_FACILITY=10 &>/dev/null;then
-     use_journalctl_authlog=true    
+     use_journalctl_authlog=true
 elif ! [[ -f "/var/log/auth.log" ]];then
 #     || ! ls -altr /var/log/auth.log /run/*.pid 2>/dev/null|$tailpath -n1|$greppath /var/log/auth\.log &>/dev/null;then
     [[ -z "$failreason" ]] || failreason+="\n\n"
@@ -3692,6 +3693,12 @@ if ! (rm $tmpfiles/* &>/dev/null);then
     [[ -z "$failreason" ]] || failreason+="\n\n"
     failreason+="  Unable to create files the temporary directory needed: $tmpfiles"
 fi
+external_net_interface="$($ippath -o route get 8.8.8.8 2>/dev/null|$awkpath '{for (i=1;i<=NF;i++) {if ($i=="dev"){ print $(i+1);exit }}}')"
+if [[ $($pspath aux|$greppath -vw grep|$greppath -we pump -we dhclient -we udhcpc -we dhcpcd -we dhclient3|$greppath -w $external_net_interface|$wcpath -l) -eq 0 ]] \
+       || ! [[ $(firewall_external_interface_not_in_privateIP_ranges;printf "$?") =~ ^123$ ]];then
+    not_dhcp_of_public_address="not_dhcp_of_public_address"
+    mainchecklisttest+="<center>(Not available with this IP address: dynamic IP address change notifier)\n"
+fi
 maincheckitems=("firewalling" \
 "email remote control")
 [[ -z "$not_dhcp_of_public_address" ]] && maincheckitems+=("dynamic IP address change notifier")
@@ -3703,7 +3710,7 @@ maincheckitems+=("port knocking" \
 "quit (or Enter/Tab key with no selections)")
 maincheckitems+=("f" \
 "e")
-[[ -z "$not_dhcp_of_public_address" ]] && maincheckitems+=("d") 
+[[ -z "$not_dhcp_of_public_address" ]] && maincheckitems+=("d")
 maincheckitems+=("p" \
 "l" \
 "c" \
@@ -3730,18 +3737,29 @@ for char in ${chararray[*]};do
 done
 pumppath="$($whereispath $binaryflag pump)";pumppath="${pumppath#*:}";pumppath="${pumppath# }";pumppath="${pumppath%% *}"
 # dhcp_lease_path=$($findpath / -maxdepth 5 -name dhclient*.lease* 2> /dev/null)
-# eval "$pythonpath -c \"import platform;print(platform.linux_distribution()[0])\" &> /dev/null > "$tmpfiles\distributionby.${0#*/}\"" \
-#    || (eval "printf \"Functionality may be limited due to inability to determine distribution type\n";press_a_key) \
-#    || eval "echo $OSTYPE > "$tmpfiles\distributionby.${0#*/}\""
+<<"EOF"
+# The following was going to be used to determine repository package name differences without operator intervention, but with all the different architecture variances having their own additional repository subset, it would be a senseless waste of coding time.
+pythonpath="$($whereispath $binaryflag python)";pythonpath="${pythonpath#*:}";pythonpath="${pythonpath# }";pythonpath="${pythonpath%% *}"
+! [[ -x "$pythonpath" ]] && pythonpath="" # the python binary is not present
+pythondistrochkfile="$tmpfiles/distributionby.${0#*/}"
+pythonversionchkfile="$tmpfiles/distro_versionby.${0#*/}"
+rm -f "$pythondistrochkfile""err"
+eval "$pythonpath -c \"from platform import linux_distribution;print(linux_distribution()[0])\"" 2>"$pythondistrochkfile""err" > "$pythondistrochkfile"
+eval "$pythonpath -c \"from platform import linux_distribution;print(linux_distribution()[1])\"" 2>>"$pythondistrochkfile""err" > "$pythonversionchkfile"
+if [[ -s "$pythondistrochkfile""err" ]];then #so python 3 didn't work, try 2 next
+    rm -f "$pythondistrochkfile""err" 2 > /dev/null
+    eval "$pythonpath -c \"import platform;from platform import linux_distribution;print(platform.linux_distribution()[0])\" 2>\"$pythondistrochkfile""err\"" > "$pythondistrochkfile"
+    eval "$pythonpath -c \"import platform;from platform import linux_distribution;print(platform.linux_distribution()[1])\" 2>>\"$pythondistrochkfile""err\"" > "$pythonversionchkfile"
+fi
+if [[ -s "$pythondistrochkfile""err" ]];then
+    rm -f "$pythondistrochkfile""err" 2 > /dev/null
+    printf "Functionality to know correct packages to install may be limited due to inability to determine distribution type.  You might want to install python to correct this, but the point is mute if all packages needed are already installed or you are willing to install them manually.  ";press_a_key
+    echo $OSTYPE > "$pythondistrochkfile"
+fi
+EOF
 # eval "$ifconfigpath -a|$awkpath -F'^ ' '{print \$1}'|$awkpath '{print \$1}'|$greppath -vw lo|$xargspath" > "interfacesby.${0#*/}"
 # Introduction ? and what we'll do
 # POOFITEE: "Packet filtering Owner Only access linux Firewall - the system is Invisible To Everyone Else"
-external_net_interface="$($ippath -o route get 8.8.8.8 2>/dev/null|$awkpath '{for (i=1;i<=NF;i++) {if ($i=="dev"){ print $(i+1);exit }}}')"
-if [[ $($pspath aux|$greppath -vw grep|$greppath -we pump -we dhclient -we udhcpc -we dhcpcd -we dhclient3|$greppath -w $external_net_interface|$wcpath -l) -eq 0 ]] \
-       || ! [[ $(firewall_external_interface_not_in_privateIP_ranges;printf "$?") =~ ^123$ ]];then
-    not_dhcp_of_public_address="not_dhcp_of_public_address"
-    mainchecklisttest+="<center>(Not available with this IP address: dynamic IP address change notifier)\n"
-fi
 if ! [[ -z "$answer2" ]];then
     [[ -z "$failreason" ]] || failreason+="\n\n"
     failreason+="  Invalid command line option: the first option is menu selections, \
@@ -3778,7 +3796,7 @@ if ! [[ -z "$failreason" ]];then
 fi
 #We'll place this installer path variable here for future use possibly to inform in the next warning section
 busy_spinner_angles=("|" "/" "-" "\\" "|" "/" "-" "\\")
-installers=("apt-get" "-y install" dnf install yum "-y install" zypper install emerge "" pacman "--noconfirm -S" pkg install  pkg_add "" xbps-install -Sy brew install port install)
+installers=("apt-get" "-y install" dnf "-y install" yum "-y install" zypper install emerge "" pacman "--noconfirm -S" pkg install  pkg_add "" xbps-install -Sy brew install port install)
 num_of_installers="${!installers[*]}"
 num_of_installers="${num_of_installers##* }"
 num_of_installers=$(((num_of_installers +1) / 2))
@@ -3823,10 +3841,9 @@ fi
 #force these to be global variables, we need them to perform the install:
 gawkpath=""
 mawkpath=""
-# pythonpath="$($whereispath $binaryflag python)";pythonpath="${pythonpath#*:}";pythonpath="${pythonpath# }";pythonpath="${pythonpath%% *}"
 ifconfigpath="$($whereispath $binaryflag ifconfig)";ifconfigpath="${ifconfigpath#*:}";ifconfigpath="${ifconfigpath# }";ifconfigpath="${ifconfigpath%% *}"
 uniqpath="$($whereispath $binaryflag uniq)";uniqpath="${uniqpath#*:}";uniqpath="${uniqpath# }";uniqpath="${uniqpath%% *}"
-findpath="$($whereispath $binaryflag find)";findpath="${findpath#*:}";findpath="${findpath# }";findpath="${findpath%% *}"
+#findpath="$($whereispath $binaryflag find)";findpath="${findpath#*:}";findpath="${findpath# }";findpath="${findpath%% *}"
 xargspath="$($whereispath $binaryflag xargs)";xargspath="${xargspath#*:}";xargspath="${xargspath# }";xargspath="${xargspath%% *}"
 getentpath="$($whereispath $binaryflag getent)";getentpath="${getentpath#*:}";getentpath="${getentpath# }";getentpath="${getentpath%% *}"
 timeoutpath="$($whereispath $binaryflag timeout)";timeoutpath="${timeoutpath#*:}";timeoutpath="${timeoutpath# }";timeoutpath="${timeoutpath%% *}"
@@ -3836,7 +3853,7 @@ if [[ -z "$adduserpath" ]];then
 fi
 passwdpath="$($whereispath $binaryflag passwd)";passwdpath="${passwdpath#*:}";passwdpath="${passwdpath# }";passwdpath="${passwdpath%% *}";
 
-for pgm in ifconfig uniq find tail xargs getent;do
+for pgm in ifconfig uniq tail xargs getent;do
     if [[ -z "$(eval printf -- "\$$pgm""path" 2>/dev/null)" ]];then
         localwarning+="\n$pgm needs to be installed\n"
     fi
@@ -4240,16 +4257,16 @@ installer to work with (in another terminal window, of course) and resume here."
                  if [ -z "$been_here_before" ];then
                       ensure_connection v
                       if [[ "$installerpath" =~ apt-get|pacman ]];then
-                           printf "Installation of\n$notinstalled\nis required next.  Press u to update your system's package installer first,\
-$([[ "$installerpath" =~ apt-get ]] && printf "\npress b to both update your system's package installer & have it run autoremove,")\
+                           printf "Installation of\n$notinstalled\nis required next.  Press u to update your system\'s package installer first,\
+$([[ "$installerpath" =~ apt-get|dnf|yum ]] && printf "\npress b to both update your system's package installer & have it run autoremove,")\
 \nany other letter or number key not to update the installer first.  \n"
                            press_a_key u $([[ "$installerpath" =~ apt-get ]] && printf "b" || printf "<other-letter-or-number>")
                            if [[ "$installerpath" =~ apt-get ]] && [[ "$REPLY" =~ [Bb] ]];then
 #                                clear
                                 installeranswer="$REPLY"
-                                printf "\r\e[KCleaning up with apt-get autoremove..."
+                                printf "\r\e[KCleaning up with ${installerpath%%' '*} autoremove..."
                                 start_busy_spinner
-                                apt-get autoremove -y &>/dev/null
+                                "${installerpath%%' '*} autoremove -y" &>/dev/null
                                 stop_busy_spinner
                                 REPLY="$installeranswer"
                            fi
@@ -4257,10 +4274,12 @@ $([[ "$installerpath" =~ apt-get ]] && printf "\npress b to both update your sys
                                 printf "\r\e[KUpdating your system\'s package installer..." # in arch, do pacman -Syuu
                                 if [[ "$installerpath" =~ apt-get ]];then
                                     start_busy_spinner
-                                    apt-get update &>/dev/null
+                                    "${installerpath%%' '*} update -y" &>/dev/null
                                     stop_busy_spinner
-                                else
+                                elif [[ "$installerpath" =~ pacman ]];then
                                     pacman --noconfirm -Syuu  # &>/dev/null
+                                elif [[ "$installerpath" =~ dnf|yum ]];then
+                                    "${installerpath%%' '*} upgrade -y" &>/dev/null
                                 fi
                            fi
                            been_here_before="been_here_before"
@@ -4278,7 +4297,7 @@ $([[ "$installerpath" =~ apt-get ]] && printf "\npress b to both update your sys
 # make the following into a function
 #switch_from_more_common_package_to_less_common_package dnsutils dig ldns drill
 #switch_from_more_common_package_to_less_common_package netfilter-persistent netfilter-persistent iptables-persistent iptables-persistent
-# might need to check out http://tldp.org/LDP/abs/html/complexfunct.html
+# might need to check out http://tldp.org/LDP/abs/html/complexfunct.html and http://www.linuxfromscratch.org/blfs/view/svn/postlfs/iptables.html and http://www.linuxfromscratch.org/blfs/view/svn/postlfs/firewall.html
 # can uninitialized variables be passed into function by reference?  Of course not!
                  if [[ "$not_installed_single_line" =~ ^netfilter-persistent ]];then
                       if ! [[ -z "$netfilter_persistent_already_given_a_chance" ]];then
@@ -4331,7 +4350,22 @@ $([[ "$installerpath" =~ apt-get ]] && printf "\npress b to both update your sys
                           adduser_already_given_a_chance="already_given_a_chance"
                       fi
                  fi
-                 if [ $? != "0" ] && [ -z "$previous_not_installed" ] || [ "$(what_needs_to_be_installed;echo "$?")" != "$previous_not_installed" ];then
+                 if [[ "$not_installed_single_line" =~ ^mailutils ]];then
+                     if ! [[ -z "$mailutils_already_given_a_chance" ]];then
+                          mailutils_already_given_a_chance=""
+                          mailpath=$($whereispath $binaryflag mailx);mailpath="${mailpath#*:}";mailpath="${mailpath# }";mailpath="${mailpath%% *}"
+                          if [[ -z "$mailpath" ]];then
+                                eval "$xargspath -a <(printf "$not_installed_single_line"|$sedpath 's/mailutils/mailx/1') -r -- $installerpath" 2>/dev/null
+                                mailpath=$($whereispath $binaryflag mail);mailpath="${mailpath#*:}";mailpath="${mailpath# }";mailpath="${mailpath%% *}"
+                                what_needs_to_be_installed
+                          else
+                                mailpath=$($whereispath $binaryflag mailx);adduserpath="${adduserpath#*:}";adduserpath="${adduserpath# }";adduserpath="${adduserpath%% *}"
+                          fi
+                     else
+                         mailutils_already_given_a_chance="already_given_a_chance"
+                     fi
+                fi
+                if [ $? != "0" ] && [ -z "$previous_not_installed" ] || [ "$(what_needs_to_be_installed;echo "$?")" != "$previous_not_installed" ];then
                       : # keep looping as long as progress is being detected
                       previous_not_installed="$(what_needs_to_be_installed;echo "$?")"
                  elif [ $? != "0" ] && [ "$(what_needs_to_be_installed;echo "$?")" != "$previous_not_installed" ];then
@@ -4388,10 +4422,10 @@ You'll have to load the ipset module manually and restart poofitee installer.  H
 is a web page that may help you with that:\
 \n\n<center>http://www.fwbuilder.org/4.0/docs/users_guide5/Appendix.shtml\n" infobox "$globaltitle" "$globalbacktitle"
                     read -srn1;read -srn4 -t 0.001 discard
-#                    exit # this checks to see whether we need to manually load the ipset maodule
+#                    exit # this checks to see whether we need to manually load the ipset module
                 fi
             fi
-        fi         
+        fi
         while true;do
             if ($getentpath passwd|$greppath -w ^poofitee >/dev/null);then
                 poofitee_home_dir="$($getentpath passwd|$greppath -w ^poofitee|$awkpath -F: '{printf $6}')"
@@ -4513,8 +4547,8 @@ is a web page that may help you with that:\
             if [[ -z "$sendmail_works" ]];then
                 outemail_warnings
                 press_a_key
+                conf_postfix
             fi
-            conf_postfix
             install_rc
             install_dynIPch
         fi
@@ -4523,8 +4557,8 @@ is a web page that may help you with that:\
             if [[ -z "$sendmail_works" ]];then
                 outemail_warnings
                 press_a_key
+                conf_postfix
             fi
-            conf_postfix
             install_port_knocking
         fi
         if [[ "$answer" =~ f ]];then
@@ -4540,8 +4574,8 @@ is a web page that may help you with that:\
             if [[ -z "$sendmail_works" ]];then
                 outemail_warnings
                 press_a_key
+                conf_postfix
             fi
-            conf_postfix
             install_tail_f_lines_and_receiving_script
         fi
         [[ "$answer" =~ [fep] ]] && advise_to_verify_persistency
@@ -4549,7 +4583,7 @@ is a web page that may help you with that:\
         press_a_key
         layitout "$logo" dupinreverse truncate
     fi
-    answer=""
+    ! [[ $answer =~ \? ]] && answer="q" || answer=""
 done
 
 #IPSet RANDOM NOTES FOLLOW FROM DIFFERENT SITES.  DO WEB SEARCH ON THEM FOR MORE DETAILS
