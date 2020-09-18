@@ -393,12 +393,15 @@ what_needs_to_be_installed () {
 [[ -z "$nicepath" ]] &&  nicepath=$($whereispath $binaryflag nice);nicepath="${nicepath#*:}";nicepath="${nicepath# }";nicepath="${nicepath%% *}" 
 [[ -z "$netfiltperspath" ]] &&  netfiltperspath=$($whereispath $binaryflag netfilter-persistent);netfiltperspath="${netfiltperspath#*:}";netfiltperspath="${netfiltperspath# }";netfiltperspath="${netfiltperspath%% *}" 
 # [[ -d "/usr/share/netfilter-persistent/plugins.d" ]] && { netfiltperspath=$($whereispath $binaryflag netfilter-persistent);netfiltperspath="${netfiltperspath#*:}";netfiltperspath="${netfiltperspath# }";netfiltperspath="${netfiltperspath%% *}" }
-[[ -z "$mailpath" ]] &&  mailpath=$($whereispath $binaryflag mail);mailpath="${mailpath#*:}" 
+[[ -z "$mailpath" ]] &&  mailpath=$($whereispath $binaryflag mail);mailpath="${mailpath#*:}"
 [[ -z "$mailpath" ]] &&  mailpath=" $($whereispath $binaryflag mailx)";mailpath="${mailpath#*:}" 
 [[ -z "$mailpath" ]] &&  mailpath=" $($whereispath $binaryflag sendmail)";mailpath="${mailpath#*:}";mailpath="${mailpath# }";mailpath="${mailpath%% *}";mailpath="${mailpath%%.*}"  # note the unique filter here!!!!!!!!!!!!!!!!!!!!!!!!
-[[ -z "$postmappath" ]] &&  postmappath=$($whereispath $binaryflag postmap);postmappath="${postmappath#*:}";postmappath="${postmappath# }";postmappath="${postmappath%% *}" 
-[[ -z "$postfixpath" ]] &&  postfixpath=$($whereispath $binaryflag postfix);postfixpath="${postfixpath#*:}";postfixpath="${postfixpath# }";postfixpath="${postfixpath%% *}" 
-[[ -z "$postqueuepath" ]] &&  postqueuepath=$($whereispath $binaryflag postqueue);postqueuepath="${postqueuepath#*:}";postqueuepath="${postqueuepath# }";postqueuepath="${postqueuepath%% *}" 
+if [[ "$1" != "sendmailworks" ]];then
+#  These will not be needed if emailing already works
+     [[ -z "$postmappath" ]] &&  postmappath=$($whereispath $binaryflag postmap);postmappath="${postmappath#*:}";postmappath="${postmappath# }";postmappath="${postmappath%% *}" 
+     [[ -z "$postfixpath" ]] &&  postfixpath=$($whereispath $binaryflag postfix);postfixpath="${postfixpath#*:}";postfixpath="${postfixpath# }";postfixpath="${postfixpath%% *}" 
+     [[ -z "$postqueuepath" ]] &&  postqueuepath=$($whereispath $binaryflag postqueue);postqueuepath="${postqueuepath#*:}";postqueuepath="${postqueuepath# }";postqueuepath="${postqueuepath%% *}" 
+fi
 if [[ "$1" == "checkawk" ]];then
     if [ -z "$been_here_before" ];then
         clear #then position cursor at bottom of screen
@@ -535,7 +538,7 @@ if ! [[ -z $mailpath ]];then
 \nlike MTA, MDA, email relay, or email server because the settings that this\
 \ninstallation script will change will most certainly be incompatible with said\
 \nrole.  If you need to avoid installing the emailing configuration, you should\
-\nmanually get the email sending to function via the command line  to work with\
+\nmanually get the email sending to function via the command line to work with\
 \nwhichever mail command is shown above, \"mail\", \"mailx\", or \"sendmail\", that this\
 \nscripting has found to currently exist on your system."
      until false;do
@@ -700,6 +703,8 @@ set_notinstalled_var () {
 [[ -z "$atpath" ]] && notinstalled+="at\n"
 [[ -z "$nicepath" ]] && notinstalled+="coreutils\n"
 [[ -z "$adduserpath" ]] && notinstalled+="adduser\nuseradd\n"
+if [[ "$1" != "sendmailworks" ]];then sendmail_works=sendmail_works;fi
+#  These will not be needed if emailing already works
 [[ -z "$sendmail_works" ]] && [[ -z $postmappath ]] && notinstalled+="postmap\npostfix\n"
 [[ -z "$sendmail_works" ]] && [[ -z $postfixpath ]] && notinstalled+="postmap\npostfix\n"
 [[ -z "$ipsetpath" ]] && notinstalled+="ipset\n"
@@ -3568,6 +3573,15 @@ EOF
 
 #Why we use whereis instead of locate: 1.  because locate will see too many directories...like "Downloads" and, in the event of VMWare being present, the files of other virtual machines.
 # and #2: locate results are only as current as the last cron-scheduled update of its database while apps like poofitee that install supporting tools need immediate-after-install currency
+if [[ "$1." == "-h." ]] || [[ "$1." == "--help." ]] || [[ "$1." == "?." ]] || [[ "$1." == "-?." ]];then
+    echo
+    echo "Command line options are:";echo
+    echo "   -h                  Displays this help info"
+    echo "   checkawk      (no dash) Script function will be limited to merely checking for the presence of an awk/nawk/mawk/gawk version that properly accepts input from stdbuf -o0"
+    echo "   sendmailworks (no dash) Protects all outbound email functionality present; won't alter anything related to outbound emailing";echo
+    echo "Only one of the above is allowed at a time.  Only the first option will be valid.  Any following ones will be ignored";echo
+    exit
+fi
 tmpfiles="/tmp/fifos_and_temp_files_for_poofitee_installer"
 usrdir="";localdir="";sharedir="";bindir="";sbindir="";binaryflag="-b";dirsign="";counter=0
 D2b=({0..1}{0..1}{0..1}{0..1}{0..1}{0..1})
